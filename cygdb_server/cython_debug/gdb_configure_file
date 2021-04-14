@@ -1,0 +1,38 @@
+# This is a gdb command file
+# See https://sourceware.org/gdb/onlinedocs/gdb/Command-Files.html
+
+set breakpoint pending on
+set print pretty on
+
+python
+try:
+    # Activate virtualenv, if we were launched from one
+    import os
+    virtualenv = os.getenv('VIRTUAL_ENV')
+    if virtualenv:
+        path_to_activate_this_py = os.path.join(virtualenv, 'bin', 'activate_this.py')
+        print("gdb command file: Activating virtualenv: %s; path_to_activate_this_py: %s" % (
+            virtualenv, path_to_activate_this_py))
+        with open(path_to_activate_this_py) as f:
+            exec(f.read(), dict(__file__=path_to_activate_this_py))
+    from Cython.Debugger import libcython, libpython
+except Exception as ex:
+    from traceback import print_exc
+    print("There was an error in Python code originating from the file Cygdb_terminal.py")
+    print("It used the Python interpreter " + str(sys.executable))
+    print_exc()
+    exit(1)
+end
+file /home/sam/envs/py8/bin/python
+cy import ./cython_debug/cython_debug_info_demo
+python
+import sys
+try:
+    gdb.lookup_type('PyModuleObject')
+except RuntimeError:
+    sys.stderr.write(
+        "/home/sam/envs/py8/bin/python was not compiled with debug symbols (or it was "
+        "stripped). Some functionality may not work (properly).\n")
+end
+
+source .cygdbinit
