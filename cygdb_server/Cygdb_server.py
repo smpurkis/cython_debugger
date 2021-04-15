@@ -211,6 +211,11 @@ def hello(hello: str = Body(...), test: str = Body(...)):
     return "Hello: " + hello
 
 
+@app.get("/hello")
+def hello():
+    return "Working"
+
+
 @app.post("/setBreakpoints")
 def set_breakpoints(source: str = Body(...), breakpoints: List[int] = Body(...)):
     valid_breakpoints = []
