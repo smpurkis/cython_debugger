@@ -129,6 +129,7 @@ def main(path_to_debug_info=None, gdb_argv=None):
     tempfilename = make_command_file(path_to_debug_info)
     cmd = [options.gdb, "--nx", "--interpreter=mi3", "--quiet", '-command', tempfilename.as_posix(), "--args", options.python,
            options.file]
+    print(" ".join(cmd))
 
     cygdb = CygdbController(command=cmd)
 
@@ -140,6 +141,7 @@ def main(path_to_debug_info=None, gdb_argv=None):
     cygdb.run()
     p = 0
     cygdb.cont()
+    cygdb.get_globals()
     p = 0
     cygdb.cont()
     # cygdb.next()

@@ -16,13 +16,11 @@ import os
 import subprocess as sp
 import textwrap
 from pathlib import Path
-from typing import Optional, List
+from typing import List
 
 import uvicorn
 import yaml
 from fastapi import FastAPI, Body
-from fastapi_utils.cbv import cbv
-from fastapi_utils.inferring_router import InferringRouter
 from pydantic import BaseModel
 
 from cygdb_commands import CygdbController
@@ -104,7 +102,7 @@ def setup_files(debug_path=".",
     breakpoints.
     """
 
-    BUILD_CMD = f"{python_debug_executable_path} setup.py build_ext --inplace"
+    BUILD_CMD = f"{python_debug_executable_path} setup.py build_ext --inplace --force"
     build_outputs = sp.run(BUILD_CMD.split(), stdout=sp.PIPE).stdout.decode()
     print(build_outputs)
 
@@ -119,11 +117,10 @@ class Config(BaseModel):
     file_path: str
     python_debug_executable_path: str
 
+
 app = FastAPI()
-router = InferringRouter()
 
 
-@cbv(router)
 class CythonServer:
     def __init__(self, config_path=None):
         self.config_path = config_path
@@ -135,15 +132,13 @@ class CythonServer:
             self.gdb_configuration_file = "gdb_configuration_file",
             self.python_debug_executable_path = "/usr/bin/python3-dbg",
             self.file_path = "main.py"
+            self.debug_path = "."
+        self.cygdb = None
 
     def load_config(self, config):
         self.gdb_executable_path = config.gdb_executable_path
         self.python_debug_executable_path = config.python_debug_executable_path
         self.file_path = config.file_path
-
-    @router.post("/config")
-    def load_config_post(self, config: Config):
-        self.load_config(config)
 
     def setup_tempfilename(self):
         if self.debug_path and self.python_debug_executable_path:
@@ -161,35 +156,91 @@ class CythonServer:
     def set_file_path(self, file_path):
         self.file_path = file_path
 
-    @router.get("/")
-    def get_test(self):
-        return "hello"
+    def format_progress(self, resp):
+        if len(resp) == 0:
+            resp = {
+                "ended": True
+            }
+        else:
+            resp = {
+                "ended": False,
+                "breakpoint": {
+                    "filename": resp[-1]["filename"],
+                    "lineno": resp[-1]["lineno"]
+                }
+            }
+        return resp
+
+    def continue_debugger(self):
+        resp = self.cygdb.cont()
+        return self.format_progress(resp)
 
     def run_debugger(self):
+        self.gdb_configuration_file = setup_files(self.debug_path, self.python_debug_executable_path)
         self.cmd = [self.gdb_executable_path, "--nx", "--interpreter=mi3", "--quiet", '-command',
                     self.gdb_configuration_file.as_posix(),
                     "--args",
                     self.python_debug_executable_path,
                     self.file_path]
+        print(" ".join(self.cmd))
 
-        self.cygdb = CygdbController(command=self.cmd)
-        self.cygdb.run()
-
-    @router.post("/hello")
-    def hello(self, hello: str = Body(...), test: str = Body(...)):
-        return "Hello: " + hello
-
-    @router.post("/setBreakpoints")
-    def set_breakpoints(self, source: str = Body(...), breakpoints: List[int] = Body(...)):
-        for lineno in breakpoints:
-            self.cygdb.add_breakpoint(
-                filename=source,
-                lineno=lineno
-            )
+        resp = self.cygdb.run()
+        return self.format_progress(resp)
 
 
+cython_server = CythonServer()
 
-app.include_router(router)
+
+@app.post("/config")
+def load_config_post(config: Config):
+    cython_server.load_config(config)
+    cython_server.debug_path = "."
+    cython_server.setup_tempfilename()
+    cython_server.cmd = [cython_server.gdb_executable_path, "--nx", "--interpreter=mi3", "--quiet", '-command',
+                         cython_server.gdb_configuration_file.as_posix(),
+                         "--args",
+                         cython_server.python_debug_executable_path,
+                         cython_server.file_path]
+
+    cython_server.cygdb = CygdbController(command=cython_server.cmd)
+    print(cython_server.cygdb)
+
+
+@app.post("/hello")
+def hello(hello: str = Body(...), test: str = Body(...)):
+    return "Hello: " + hello
+
+
+@app.post("/setBreakpoints")
+def set_breakpoints(source: str = Body(...), breakpoints: List[int] = Body(...)):
+    valid_breakpoints = []
+    for lineno in breakpoints:
+        valid = cython_server.cygdb.add_breakpoint(
+            filename=source,
+            lineno=lineno
+        )
+        if valid:
+            valid_breakpoints.append(lineno)
+    return {
+        "source": source,
+        "breakpoints": breakpoints
+    }
+
+
+@app.post("/Launch")
+def run_debugger(source: str = Body(..., embed=True)):
+    return cython_server.run_debugger()
+
+
+@app.get("/Continue")
+def continue_debugger():
+    return cython_server.continue_debugger()
+
+
+@app.get("/Frame")
+def get_frame():
+    return cython_server.cygdb.frame
+
 
 if __name__ == '__main__':
     # config = dict(
@@ -200,5 +251,4 @@ if __name__ == '__main__':
     # )
     # config_path = Path("cygdb.yaml")
     # yaml.dump(config, config_path.open("w"))
-    # server = CythonServer()
-    uvicorn.run(app, port=3456)
+    uvicorn.run(app, port=3456, debug=True)

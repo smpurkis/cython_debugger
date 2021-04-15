@@ -1,3 +1,6 @@
+import time
+from pathlib import Path
+
 import regex as re
 
 from pygdbmi.gdbcontroller import GdbController
@@ -30,6 +33,7 @@ class CygdbController:
         self.trace = []
         self.frame = None
         self.breakpoints = []
+        self.current_breakpoint = None
 
     def get_locals(self):
         resp = self.gdb.write("cy locals")
@@ -43,12 +47,14 @@ class CygdbController:
     def cont(self):
         resp = self.gdb.write("cy cont")
         resp = self.print_output(resp)
-        self.next()
+        # self.next()
         # self.get_to_next_cython_line()
         self.get_frame()
-        return resp
+        return self.frame.trace
 
     def add_breakpoint(self, fn="", filename="", module="", lineno=""):
+        lineno = str(lineno)
+        stem = Path(filename).stem
         if len(fn) > 0:
             self.breakpoints.append(dict(
                 type="fn",
@@ -59,16 +65,16 @@ class CygdbController:
         elif len(filename) > 0 and len(lineno) > 0:
             self.breakpoints.append(dict(
                 type="file",
-                filename=filename,
+                filename=Path(filename).stem,
                 lineno=lineno
             ))
-            resp = self.gdb.write(f"cy break {filename}:{lineno}")
+            resp = self.gdb.write(f"cy break {stem}:{lineno}")
             # self.next()
         else:
-            resp = "Breakpoint invalid"
+            return None
 
-        resp = self.print_output(resp)
-        return resp
+        # resp = self.print_output(resp)
+        return True
 
     def get_frame(self):
         frame = Frame()
@@ -138,8 +144,13 @@ class CygdbController:
 
     def get_to_next_cython_line(self):
         at_breakpoint = False
-        while not at_breakpoint:
+        iterations = 0
+        while not at_breakpoint and iterations < 1000:
+            iterations += 1
             traces = self.backtrace()
+            if len(traces) == 0:
+                continue
+            print("running to next line")
             for bp in self.breakpoints:
                 at_breakpoint = False
                 if bp["type"] == "fn":
@@ -157,10 +168,10 @@ class CygdbController:
                 self.next()
 
     def run(self):
-        resp = self.gdb.write(f"cy run")
+        self.gdb.write(f"cy run")
         self.get_to_next_cython_line()
         self.get_frame()
-        return self.print_output(resp)
+        return self.frame.trace
 
     @staticmethod
     def print_output(responses):

@@ -15,5 +15,4 @@ l = [6, 4, 6, 34, 5, 345]
 test(x2)
 y = demo.baz(x2, np.zeros((10, 10)), 8, l)
 print(demo.bar(x2))
-breakpoint()
 print(x2, y)
