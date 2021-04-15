@@ -256,4 +256,4 @@ if __name__ == '__main__':
     # )
     # config_path = Path("cygdb.yaml")
     # yaml.dump(config, config_path.open("w"))
-    uvicorn.run(app, port=3456, debug=True)
+    uvicorn.run(app, host="0.0.0.0", port=3456)

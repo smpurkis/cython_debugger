@@ -7,4 +7,5 @@ RUN python3.8 -m pip --version
 RUN git clone https://github.com/smpurkis/cython_debugger.git
 WORKDIR ./cython_debugger/cygdb_server
 RUN pip install -r requirements.txt
+EXPOSE 3456
 CMD python3.8 Cygdb_server.py
