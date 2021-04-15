@@ -119,7 +119,7 @@ def main(path_to_debug_info=None, gdb_argv=None):
     parser.add_option("--file", "-f",
                       dest="file", default="main.py")
 
-    BUILD_CMD = "python3-dbg setup.py build_ext --inplace"
+    BUILD_CMD = "python3.8-dbg setup.py build_ext --inplace"
     build_outputs = sp.run(BUILD_CMD.split(), stdout=sp.PIPE).stdout.decode()
     print(build_outputs)
 
