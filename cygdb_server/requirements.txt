@@ -18,3 +18,4 @@ starlette==0.13.6
 toml==0.10.2
 typing-extensions==3.7.4.3
 uvicorn==0.13.4
+numpy
