@@ -10,7 +10,7 @@ def test_pipeline():
     config = {
         "file_path": "main.py",
         "gdb_executable_path": "/usr/local/bin/gdb",
-        "python_debug_executable_path": "/usr/bin/python3-dbg",
+        "python_debug_executable_path": "/usr/bin/python3.8-dbg",
         "gdb_configuration_file": "gdb_configuration_file",
     }
 
