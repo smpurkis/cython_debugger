@@ -1,7 +1,9 @@
+import ast
 import time
 from pathlib import Path
 
 import regex as re
+import json
 
 from pygdbmi.gdbcontroller import GdbController
 
@@ -129,17 +131,25 @@ class CygdbController:
         resp = self.print_output(resp)
         return resp
 
-    def determine_python_type(self, var):
-        class_pattern = r"\<\w+ '(.*)'\>"
-        resp = self.exec(f"type({var})")
-        # assert len(resp) == 1
-        match = False
-        if len(resp) > 0:
-            match = re.match(class_pattern, resp[0])
-        if match:
-            var_type = f"{match.group(1)}"
+    def determine_python_type(self, name, value=None):
+        var_type = "Unknown"
+        if value is None:
+            class_pattern = r"\<\w+ '(.*)'\>"
+            resp = self.exec(f"type({name})")
+            # assert len(resp) == 1
+            match = False
+            if len(resp) > 0:
+                match = re.match(class_pattern, resp[0])
+            if match:
+                var_type = f"{match.group(1)}"
+            else:
+                var_type = "Unknown"
         else:
-            var_type = "Unknown"
+            try:
+                decoded_value = ast.literal_eval(value)
+                var_type = str(type(decoded_value))
+            except Exception as e:
+                print(e)
         return var_type
 
     def get_to_next_cython_line(self):
@@ -201,10 +211,10 @@ class CygdbController:
 
             if groups[1] is not None:
                 type_ = f"c {groups[1]}"
-                if "py" in type_.lower() or "object" in type_.lower():
+                if "Py" in type_ and "Object" in type_:
                     type_ = self.determine_python_type(name)
             else:
-                type_ = self.determine_python_type(name)
+                type_ = self.determine_python_type(name, value)
 
             var = dict(
                 name=name,
