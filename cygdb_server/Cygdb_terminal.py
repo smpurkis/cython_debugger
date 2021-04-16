@@ -35,7 +35,7 @@ def make_command_file(path_to_debug_info, prefix_code=''):
         sys.exit('%s.\nNo debug files were found in %s. Aborting.' % (
             usage, os.path.abspath(path_to_debug_info)))
 
-    gdb_cy_configure_path = Path("cython_debug", "gdb_configure_file")
+    gdb_cy_configure_path = Path("cython_debug", "gdb_configuration_file")
     gdb_cy_configure_path.parent.mkdir(exist_ok=True)
     f = gdb_cy_configure_path.open("w")
     try:
