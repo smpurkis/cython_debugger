@@ -114,7 +114,6 @@ def setup_files(debug_path=".",
 
 class Config(BaseModel):
     gdb_executable_path: str
-    file_path: str
     python_debug_executable_path: str
 
 
@@ -138,7 +137,9 @@ class CythonServer:
     def load_config(self, config):
         self.gdb_executable_path = config.gdb_executable_path
         self.python_debug_executable_path = config.python_debug_executable_path
-        self.file_path = config.file_path
+
+    def file_to_debug(self, file_path):
+        self.file_path = file_path
 
     def setup_tempfilename(self):
         if self.debug_path and self.python_debug_executable_path:
@@ -152,9 +153,6 @@ class CythonServer:
 
     def set_python_debug_executable(self, python_debug_executable_path):
         self.python_debug_executable_path = python_debug_executable_path
-
-    def set_file_path(self, file_path):
-        self.file_path = file_path
 
     def format_progress(self, resp):
         if len(resp) == 0:
@@ -196,6 +194,12 @@ def load_config_post(config: Config):
     cython_server.load_config(config)
     cython_server.debug_path = "."
     cython_server.setup_tempfilename()
+    return
+
+
+@app.post("/setFileToDebug")
+def set_file_to_debug(source: str = Body(..., embed=True)):
+    cython_server.file_to_debug(source)
     cython_server.cmd = [cython_server.gdb_executable_path, "--nx", "--interpreter=mi3", "--quiet", '-command',
                          cython_server.gdb_configuration_file.as_posix(),
                          "--args",
@@ -204,6 +208,7 @@ def load_config_post(config: Config):
 
     cython_server.cygdb = CygdbController(command=cython_server.cmd)
     print(cython_server.cygdb)
+    return
 
 
 @app.post("/hello")
@@ -233,7 +238,7 @@ def set_breakpoints(source: str = Body(...), breakpoints: List[int] = Body(...))
 
 
 @app.post("/Launch")
-def run_debugger(source: str = Body(..., embed=True)):
+def run_debugger():
     return cython_server.run_debugger()
 
 
@@ -245,6 +250,13 @@ def continue_debugger():
 @app.get("/Frame")
 def get_frame():
     return cython_server.cygdb.frame
+
+
+@app.get("/Restart")
+def restart():
+    global cython_server
+    cython_server = CythonServer()
+    return
 
 
 if __name__ == '__main__':

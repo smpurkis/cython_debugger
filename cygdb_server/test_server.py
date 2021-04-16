@@ -1,37 +1,55 @@
 import json
-import time
 from pprint import pprint
 
 import requests
+from pytest import mark
 
-def test_pipeline():
-    server_url = "http://127.0.0.1:3456/"
+server_url = "http://127.0.0.1:3456/"
 
-    config = {
-        "file_path": "main.py",
-        "gdb_executable_path": "/usr/local/bin/gdb",
-        "python_debug_executable_path": "/usr/bin/python3.8-dbg",
-        "gdb_configuration_file": "gdb_configuration_file",
-    }
+config = {
+    "gdb_executable_path": "/usr/local/bin/gdb",
+    "python_debug_executable_path": "/usr/bin/python3.8-dbg",
+    "gdb_configuration_file": "gdb_configuration_file",
+}
 
+
+@mark.order0
+def test_hello_get():
+    resp = requests.get(server_url + "hello")
+    print(resp)
+    print(resp.text)
+    assert resp.text == '"Working"'
+
+
+@mark.order1
+def test_hello_post():
+    resp = requests.post(server_url + "hello", data=json.dumps({
+        "hello": "Sam",
+        "test": "eopofmw"
+    }))
+    print(resp)
+    print(resp.text)
+    assert resp.text == '"Hello: Sam"'
+
+
+@mark.order2
+def test_config_post():
     resp = requests.post(server_url + "config", data=json.dumps(config))
     print(resp)
     print(resp.text)
 
-    resp = requests.post(server_url + "hello", data=json.dumps({
-        "hello": "qqefew",
-        "test": "eopofmw"
+
+@mark.order3
+def test_set_file_to_debug():
+    resp = requests.post(server_url + "setFileToDebug", data=json.dumps({
+        "source": "main.py"
     }))
     print(resp)
     print(resp.text)
 
-    resp = requests.post(server_url + "hello", data=json.dumps({
-        "hello": "qqefew",
-        "test": "eopofmw"
-    }))
-    print(resp)
-    print(resp.text)
 
+@mark.order4
+def test_set_breakpoints_post():
     resp = requests.post(server_url + "setBreakpoints", data=json.dumps({
         "source": "demo.pyx",
         "breakpoints": [22, 25]
@@ -43,6 +61,9 @@ def test_pipeline():
         "breakpoints": [22, 25]
     }
 
+
+@mark.order5
+def test_launch_post():
     resp = requests.post(server_url + "Launch", data=json.dumps({
         "source": "demo.pyx",
     }))
@@ -56,17 +77,19 @@ def test_pipeline():
         }
     }
 
+
+@mark.order7
+def test_frame_get():
     resp = requests.get(server_url + "Frame")
     print(resp)
-    pprint(json.loads(resp.text))
-    assert json.loads(resp.text) == {
-        "ended": False,
-        "breakpoint": {
-            "filename": "demo.pyx",
-            "lineno": "22"
-        }
-    }
+    frame = json.loads(resp.text)
+    assert len(frame.get("local_variables", [])) == 9
+    assert len(frame.get("global_variables", [])) == 11
+    assert len(frame.get("trace", [])) == 2
 
+
+@mark.order8
+def test_continue_get():
     resp = requests.get(server_url + "Continue")
     print(resp)
     print(resp.text)
