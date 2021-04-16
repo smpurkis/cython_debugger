@@ -210,9 +210,13 @@ class CygdbController:
                 value = "Unknown"
 
             if groups[1] is not None:
-                type_ = f"c {groups[1]}"
+                type_ = groups[1]
                 if "Py" in type_ and "Object" in type_:
-                    type_ = self.determine_python_type(name)
+                    type2_ = self.determine_python_type(name)
+                    if type2_.lower() != "unknown":
+                        type_ = type2_
+                else:
+                    type_ = f"cy {groups[1]}"
             else:
                 type_ = self.determine_python_type(name, value)
 
