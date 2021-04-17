@@ -38,6 +38,8 @@ def copy_mounted_folder_to_working_folder():
     sp.call(f"ls -laths {MOUNTED_PROJECT_FOLDER}", shell=True)
     print(f"ls -laths {WORKING_FOLDER}")
     sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
+    print(f"ls -laths {WORKING_FOLDER}/project_folder")
+    sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
 
 
 copy_mounted_folder_to_working_folder()
