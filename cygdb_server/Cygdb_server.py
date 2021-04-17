@@ -100,6 +100,8 @@ def make_command_file(path_to_debug_info, prefix_code=''):
         finally:
             interpreter_file.close()
         f.write("file %s\n" % interpreter)
+        print("debug files ", debug_files)
+        print("debug fns,", [fn for fn in debug_files])
         f.write('\n'.join('cy import %s\n' % fn for fn in debug_files))
         f.write(textwrap.dedent('''\
             python
