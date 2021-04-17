@@ -66,8 +66,9 @@ def make_command_file(path_to_debug_info, prefix_code=''):
             end
             '''))
 
-        path = os.path.join(path_to_debug_info, "cython_debug", "interpreter")
-        interpreter_file = open(path)
+        path = Path(path_to_debug_info, "cython_debug", "interpreter")
+        assert path.exists()
+        interpreter_file = path.open()
         try:
             interpreter = interpreter_file.read()
         finally:
@@ -93,14 +94,15 @@ def make_command_file(path_to_debug_info, prefix_code=''):
     return gdb_cy_configure_path
 
 
-def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg"):
+def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
+                    cython_setup_file="/project_folder/setup.py"):
     """
     Start the Cython debugger. This tells gdb to import the Cython and Python
     extensions (libcython.py and libpython.py) and it enables gdb's pending
     breakpoints.
     """
 
-    BUILD_CMD = f"{python_debug_executable_path} setup.py build_ext --inplace --force"
+    BUILD_CMD = f"{python_debug_executable_path} {cython_setup_file} build_ext --inplace --force"
     build_outputs = sp.run(BUILD_CMD.split(), stdout=sp.PIPE, stderr=sp.PIPE)
     stdout = build_outputs.stdout.decode()
     stderr = build_outputs.stderr.decode()
