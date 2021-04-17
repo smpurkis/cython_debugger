@@ -34,7 +34,7 @@ def make_command_file(path_to_debug_info, prefix_code=''):
                            'cython_debug_info_*')
     debug_files = glob.glob(pattern)
 
-    gdb_cy_configure_path = Path("cython_debug", "gdb_configuration_file")
+    gdb_cy_configure_path = Path(PROJECT_FOLDER, "cython_debug", "gdb_configuration_file")
     gdb_cy_configure_path.parent.mkdir(exist_ok=True)
     f = gdb_cy_configure_path.open("w")
     try:
