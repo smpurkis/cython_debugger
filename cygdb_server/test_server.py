@@ -58,7 +58,7 @@ def test_set_breakpoints_post():
     print(resp.text)
     assert json.loads(resp.text) == {
         "source": "demo.pyx",
-        "breakpoints": [22, 25]
+        "breakpoints": [22, 792]
     }
 
 
@@ -97,6 +97,6 @@ def test_continue_get():
         "ended": False,
         "breakpoint": {
             "filename": "demo.pyx",
-            "lineno": "25"
+            "lineno": "792"
         }
     }
