@@ -33,7 +33,7 @@ WORKING_FOLDER = "/working_folder"
 # WORKING_FOLDER = "./"
 
 def copy_mounted_folder_to_working_folder():
-    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ ./"
+    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
     print(cmd)
     sp.call(cmd.split())
     print(f"ls -laths {MOUNTED_PROJECT_FOLDER}")
@@ -43,9 +43,9 @@ def copy_mounted_folder_to_working_folder():
     print(f"ls -laths {WORKING_FOLDER}/project_folder")
     sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
 
-    # cmd = f"mv {WORKING_FOLDER}/project_folder {WORKING_FOLDER}"
-    # print(cmd)
-    # sp.call(cmd.split())
+    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
+    print(cmd)
+    sp.call(cmd.split())
 
     print(f"ls -laths {WORKING_FOLDER}")
     sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
