@@ -37,6 +37,9 @@ class CygdbController:
         self.breakpoints = []
         self.current_breakpoint = None
 
+    def exit_gdb(self):
+        self.gdb.exit()
+
     def get_locals(self):
         resp = self.gdb.write("cy locals")
         return self.print_output(resp)
@@ -54,7 +57,7 @@ class CygdbController:
         self.get_frame()
         return self.frame.trace
 
-    def add_breakpoint(self, fn="", filename="", module="", lineno=""):
+    def add_breakpoint(self, fn="", filename="", lineno=""):
         lineno = str(lineno)
         stem = Path(filename).stem
         if len(fn) > 0:
@@ -155,10 +158,12 @@ class CygdbController:
     def get_to_next_cython_line(self):
         at_breakpoint = False
         iterations = 0
-        while not at_breakpoint and iterations < 1000:
+        while not at_breakpoint and iterations < 50:
             iterations += 1
             traces = self.backtrace()
             if len(traces) == 0:
+                if iterations > 50:
+                    raise Exception(f"Over allowed waiting iterations: {iterations}")
                 continue
             print("running to next line")
             for bp in self.breakpoints:
@@ -178,7 +183,7 @@ class CygdbController:
                 self.next()
 
     def run(self):
-        self.gdb.write(f"cy run")
+        self.gdb.write(f"cy run", timeout_sec=1)
         self.get_to_next_cython_line()
         self.get_frame()
         return self.frame.trace

@@ -19,7 +19,6 @@ from pathlib import Path
 from typing import List
 
 import uvicorn
-import yaml
 from fastapi import FastAPI, Body
 from pydantic import BaseModel
 
@@ -94,8 +93,7 @@ def make_command_file(path_to_debug_info, prefix_code=''):
     return gdb_cy_configure_path
 
 
-def setup_files(debug_path=".",
-                python_debug_executable_path="/usr/bin/python3-dbg"):
+def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg"):
     """
     Start the Cython debugger. This tells gdb to import the Cython and Python
     extensions (libcython.py and libpython.py) and it enables gdb's pending
@@ -103,13 +101,15 @@ def setup_files(debug_path=".",
     """
 
     BUILD_CMD = f"{python_debug_executable_path} setup.py build_ext --inplace --force"
-    build_outputs = sp.run(BUILD_CMD.split(), stdout=sp.PIPE).stdout.decode()
-    print(build_outputs)
+    build_outputs = sp.run(BUILD_CMD.split(), stdout=sp.PIPE, stderr=sp.PIPE)
+    stdout = build_outputs.stdout.decode()
+    stderr = build_outputs.stderr.decode()
+    if "Error compiling Cython file" in stderr:
+        return stderr.split("\n"), False
+    print(stdout)
+    print(stderr)
 
-    path_to_debug_info = debug_path
-
-    tempfilename = make_command_file(path_to_debug_info)
-    return tempfilename
+    return stdout.split("\n"), True
 
 
 class Config(BaseModel):
@@ -121,38 +121,24 @@ app = FastAPI()
 
 
 class CythonServer:
-    def __init__(self, config_path=None):
-        self.config_path = config_path
-        if self.config_path is not None:
-            self.config = yaml.safe_load(config_path)
-            self.load_config(self.config)
-        else:
-            self.gdb_executable_path = "/usr/bin/gdb",
-            self.gdb_configuration_file = "gdb_configuration_file",
-            self.python_debug_executable_path = "/usr/bin/python3-dbg",
-            self.file_path = "main.py"
-            self.debug_path = "."
+    def __init__(self):
+        self.gdb_executable_path = None
+        self.gdb_configuration_file = None
+        self.python_debug_executable_path = None
+        self.file_path = None
+        self.debug_path = None
         self.cygdb = None
 
-    def load_config(self, config):
-        self.gdb_executable_path = config.gdb_executable_path
-        self.python_debug_executable_path = config.python_debug_executable_path
-
     def file_to_debug(self, file_path):
-        self.file_path = file_path
+        self.file_path = Path("/project_folder", file_path).as_posix()
+        return self.setup_files()
 
-    def setup_tempfilename(self):
+    def setup_files(self):
         if self.debug_path and self.python_debug_executable_path:
-            self.gdb_configuration_file = setup_files(self.debug_path, self.python_debug_executable_path)
-
-    def set_debug_path(self, debug_path):
-        self.debug_path = debug_path
-
-    def set_gdb_executable(self, gdb_executable):
-        self.gdb_executable_path = gdb_executable
-
-    def set_python_debug_executable(self, python_debug_executable_path):
-        self.python_debug_executable_path = python_debug_executable_path
+            self.gdb_configuration_file = make_command_file(self.debug_path)
+            return cythonize_files(
+                self.python_debug_executable_path
+            )
 
     def format_progress(self, resp):
         if len(resp) == 0:
@@ -174,7 +160,12 @@ class CythonServer:
         return self.format_progress(resp)
 
     def run_debugger(self):
-        self.gdb_configuration_file = setup_files(self.debug_path, self.python_debug_executable_path)
+        output, successful_compile = self.setup_files()
+        if not successful_compile:
+            return {
+                "success": False,
+                "stderr": output
+            }
         self.cmd = [self.gdb_executable_path, "--nx", "--interpreter=mi3", "--quiet", '-command',
                     self.gdb_configuration_file.as_posix(),
                     "--args",
@@ -185,21 +176,27 @@ class CythonServer:
         resp = self.cygdb.run()
         return self.format_progress(resp)
 
+    def restart_debugger(self):
+        self.cygdb.exit_gdb()
+        self.cygdb.gdb.spawn_new_gdb_subprocess()
+
 
 cython_server = CythonServer()
-
-
-@app.post("/config")
-def load_config_post(config: Config):
-    cython_server.load_config(config)
-    cython_server.debug_path = "."
-    cython_server.setup_tempfilename()
-    return
+cython_server.python_debug_executable_path = "/usr/bin/python3.8-dbg"
+cython_server.gdb_executable_path = "/usr/local/bin/gdb"
+cython_server.gdb_configuration_file = "cython_debug/gdb_configuration_file"
+cython_server.debug_path = "."
 
 
 @app.post("/setFileToDebug")
 def set_file_to_debug(source: str = Body(..., embed=True)):
-    cython_server.file_to_debug(source)
+    output, successful_compile = cython_server.file_to_debug(source)
+    if not successful_compile:
+        return {
+            "success": False,
+            "source": source,
+            "output": output
+        }
     cython_server.cmd = [cython_server.gdb_executable_path, "--nx", "--interpreter=mi3", "--quiet", '-command',
                          cython_server.gdb_configuration_file.as_posix(),
                          "--args",
@@ -208,7 +205,11 @@ def set_file_to_debug(source: str = Body(..., embed=True)):
 
     cython_server.cygdb = CygdbController(command=cython_server.cmd)
     print(cython_server.cygdb)
-    return
+    return {
+        "success": True,
+        "source": source,
+        "output": output
+    }
 
 
 @app.post("/hello")
@@ -255,17 +256,9 @@ def get_frame():
 @app.get("/Restart")
 def restart():
     global cython_server
-    cython_server = CythonServer()
+    cython_server.restart_debugger()
     return
 
 
 if __name__ == '__main__':
-    # config = dict(
-    #     gdb_executable_path="/usr/bin/gdb",
-    #     tempfilename="gdb_configuration_file",
-    #     python_debug_executable_path="/usr/bin/python3-dbg",
-    #     file_path="main.py"
-    # )
-    # config_path = Path("cygdb.yaml")
-    # yaml.dump(config, config_path.open("w"))
     uvicorn.run(app, host="0.0.0.0", port=3456)

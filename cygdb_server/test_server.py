@@ -1,5 +1,4 @@
 import json
-from pprint import pprint
 
 import requests
 from pytest import mark
@@ -32,11 +31,11 @@ def test_hello_post():
     assert resp.text == '"Hello: Sam"'
 
 
-@mark.order2
-def test_config_post():
-    resp = requests.post(server_url + "config", data=json.dumps(config))
-    print(resp)
-    print(resp.text)
+# @mark.order2
+# def test_config_post():
+#     resp = requests.post(server_url + "Config", data=json.dumps(config))
+#     print(resp)
+#     print(resp.text)
 
 
 @mark.order3
@@ -46,6 +45,10 @@ def test_set_file_to_debug():
     }))
     print(resp)
     print(resp.text)
+    resp = json.loads(resp.text)
+    assert resp["source"] == "main.py"
+    assert resp["success"] is True
+    assert type(resp["output"]) == list
 
 
 @mark.order4
@@ -58,7 +61,7 @@ def test_set_breakpoints_post():
     print(resp.text)
     assert json.loads(resp.text) == {
         "source": "demo.pyx",
-        "breakpoints": [22, 792]
+        "breakpoints": [22, 25]
     }
 
 
@@ -83,8 +86,8 @@ def test_frame_get():
     resp = requests.get(server_url + "Frame")
     print(resp)
     frame = json.loads(resp.text)
-    assert len(frame.get("local_variables", [])) == 9
-    assert len(frame.get("global_variables", [])) == 11
+    assert len(frame.get("local_variables", [])) == 8
+    assert len(frame.get("global_variables", [])) == 12
     assert len(frame.get("trace", [])) == 2
 
 
@@ -97,6 +100,52 @@ def test_continue_get():
         "ended": False,
         "breakpoint": {
             "filename": "demo.pyx",
-            "lineno": "792"
+            "lineno": "25"
+        }
+    }
+
+
+@mark.order9
+def test_restart_post():
+    resp = requests.get(server_url + "Restart")
+    print(resp)
+    print(resp.text)
+
+
+@mark.order10
+def test_set_file_to_debug2():
+    resp = requests.post(server_url + "setFileToDebug", data=json.dumps({
+        "source": "main.py"
+    }))
+    print(resp)
+    print(resp.text)
+
+
+@mark.order11
+def test_set_breakpoints_post2():
+    resp = requests.post(server_url + "setBreakpoints", data=json.dumps({
+        "source": "demo.pyx",
+        "breakpoints": [8]
+    }))
+    print(resp)
+    print(resp.text)
+    assert json.loads(resp.text) == {
+        "source": "demo.pyx",
+        "breakpoints": [8]
+    }
+
+
+@mark.order12
+def test_launch_post2():
+    resp = requests.post(server_url + "Launch", data=json.dumps({
+        "source": "demo.pyx",
+    }))
+    print(resp)
+    print(resp.text)
+    assert json.loads(resp.text) == {
+        "ended": False,
+        "breakpoint": {
+            "filename": "demo.pyx",
+            "lineno": "8"
         }
     }
