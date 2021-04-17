@@ -105,7 +105,7 @@ def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
 
     BUILD_CMD = f"cd {PROJECT_FOLDER}; {python_debug_executable_path} setup.py build_ext --inplace --force"
     print(BUILD_CMD)
-    build_outputs = sp.run(BUILD_CMD.split(), stdout=sp.PIPE, stderr=sp.PIPE)
+    build_outputs = sp.run(BUILD_CMD, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
 
     stdout = build_outputs.stdout.decode()
     stderr = build_outputs.stderr.decode()
