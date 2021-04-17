@@ -34,8 +34,8 @@ def copy_mounted_folder_to_working_folder():
     cmd = f"cp -r {MOUNTED_PROJECT_FOLDER} {WORKING_FOLDER}"
     print(cmd)
     sp.call(cmd.split())
-    sp.call(f"ls {MOUNTED_PROJECT_FOLDER}", shell=True)
-    sp.call(f"ls {WORKING_FOLDER}", shell=True)
+    sp.call(f"ls -laths {MOUNTED_PROJECT_FOLDER}", shell=True)
+    sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
 
 
 copy_mounted_folder_to_working_folder()
