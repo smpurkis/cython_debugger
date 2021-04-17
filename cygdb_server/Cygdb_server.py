@@ -62,12 +62,12 @@ def make_command_file(path_to_debug_info, prefix_code=''):
                            'cython_debug',
                            'cython_debug_info_*')
     debug_files = glob.glob(pattern)
-    print(f"pattern: {pattern}")
-    print("debug files ", debug_files)
-    debug_files = list(Path(WORKING_FOLDER).glob(pattern))
-    print("pathlib debug ", debug_files)
-    debug_files = [debug_file.as_posix() for debug_file in Path(path_to_debug_info, "cython_debug",).glob("cython_debug_info_*")]
-    print("pathlib debug2 ", debug_files)
+    # print(f"pattern: {pattern}")
+    # print("debug files ", debug_files)
+    # debug_files = list(Path(WORKING_FOLDER).glob(pattern))
+    # print("pathlib debug ", debug_files)
+    # debug_files = [debug_file.as_posix() for debug_file in Path(path_to_debug_info, "cython_debug",).glob("cython_debug_info_*")]
+    # print("pathlib debug2 ", debug_files)
     # assert len(debug_files) == 0
 
     gdb_cy_configure_path = Path(WORKING_FOLDER, "cython_debug", "gdb_configuration_file")
