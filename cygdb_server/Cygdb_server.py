@@ -26,6 +26,7 @@ from cygdb_commands import CygdbController
 
 logger = logging.getLogger(__name__)
 
+MOUNTED_PROJECT_FOLDER = "/project_folder"
 PROJECT_FOLDER = "/project_folder"
 
 def make_command_file(path_to_debug_info, prefix_code=''):
@@ -103,9 +104,9 @@ def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
     breakpoints.
     """
 
-    BUILD_CMD = f"cd {PROJECT_FOLDER}; {python_debug_executable_path} setup.py build_ext --inplace --force"
+    BUILD_CMD = f"{python_debug_executable_path} setup.py build_ext --inplace --force"
     print(BUILD_CMD)
-    build_outputs = sp.run(BUILD_CMD, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+    build_outputs = sp.run(BUILD_CMD.split(" "), cwd=PROJECT_FOLDER, stdout=sp.PIPE, stderr=sp.PIPE)
 
     stdout = build_outputs.stdout.decode()
     stderr = build_outputs.stderr.decode()

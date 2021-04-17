@@ -162,8 +162,8 @@ class CygdbController:
             iterations += 1
             traces = self.backtrace()
             if len(traces) == 0:
-                if iterations > 50:
-                    raise Exception(f"Over allowed waiting iterations: {iterations}")
+                if iterations > 10:
+                    raise Exception(f"Over allowed iterations: {iterations}")
                 continue
             print("running to next line")
             for bp in self.breakpoints:
