@@ -26,6 +26,7 @@ from cygdb_commands import CygdbController
 
 logger = logging.getLogger(__name__)
 
+PROJECT_FOLDER = "/project_folder"
 
 def make_command_file(path_to_debug_info, prefix_code=''):
     pattern = os.path.join(path_to_debug_info,
@@ -66,7 +67,7 @@ def make_command_file(path_to_debug_info, prefix_code=''):
             end
             '''))
 
-        path = Path(path_to_debug_info, "cython_debug", "interpreter")
+        path = Path(PROJECT_FOLDER, path_to_debug_info, "cython_debug", "interpreter")
         assert path.exists()
         interpreter_file = path.open()
         try:
@@ -95,7 +96,7 @@ def make_command_file(path_to_debug_info, prefix_code=''):
 
 
 def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
-                    cython_setup_file="/project_folder/setup.py"):
+                    cython_setup_file=f"{PROJECT_FOLDER}/setup.py"):
     """
     Start the Cython debugger. This tells gdb to import the Cython and Python
     extensions (libcython.py and libpython.py) and it enables gdb's pending
@@ -103,6 +104,7 @@ def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
     """
 
     BUILD_CMD = f"{python_debug_executable_path} {cython_setup_file} build_ext --inplace --force"
+    print(BUILD_CMD)
     build_outputs = sp.run(BUILD_CMD.split(), stdout=sp.PIPE, stderr=sp.PIPE)
     stdout = build_outputs.stdout.decode()
     stderr = build_outputs.stderr.decode()
@@ -132,7 +134,7 @@ class CythonServer:
         self.cygdb = None
 
     def file_to_debug(self, file_path):
-        self.file_path = Path("/project_folder", file_path).as_posix()
+        self.file_path = Path(PROJECT_FOLDER, file_path).as_posix()
         return self.setup_files()
 
     def setup_files(self):
