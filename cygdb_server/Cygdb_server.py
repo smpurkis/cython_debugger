@@ -27,7 +27,7 @@ from cygdb_commands import CygdbController
 logger = logging.getLogger(__name__)
 
 MOUNTED_PROJECT_FOLDER = "/project_folder"
-PROJECT_FOLDER = "/project_folder"
+PROJECT_FOLDER = "./"
 
 def make_command_file(path_to_debug_info, prefix_code=''):
     pattern = os.path.join(path_to_debug_info,
@@ -104,18 +104,19 @@ def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
     breakpoints.
     """
 
-    BUILD_CMD = f"{python_debug_executable_path} setup.py build_ext --inplace --force"
-    print(BUILD_CMD)
-    build_outputs = sp.run(BUILD_CMD.split(" "), cwd=PROJECT_FOLDER, stdout=sp.PIPE, stderr=sp.PIPE)
+    # BUILD_CMD = f"{python_debug_executable_path} setup.py build_ext --inplace --force"
+    # print(BUILD_CMD)
+    # build_outputs = sp.run(BUILD_CMD.split(" "), cwd=PROJECT_FOLDER, stdout=sp.PIPE, stderr=sp.PIPE)
+    #
+    # stdout = build_outputs.stdout.decode()
+    # stderr = build_outputs.stderr.decode()
+    # if "Error compiling Cython file" in stderr:
+    #     return stderr.split("\n"), False
+    # print(stdout)
+    # print(stderr)
+    return "", True
 
-    stdout = build_outputs.stdout.decode()
-    stderr = build_outputs.stderr.decode()
-    if "Error compiling Cython file" in stderr:
-        return stderr.split("\n"), False
-    print(stdout)
-    print(stderr)
-
-    return stdout.split("\n"), True
+    # return stdout.split("\n"), True
 
 
 class Config(BaseModel):
