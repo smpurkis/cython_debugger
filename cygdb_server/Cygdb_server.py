@@ -30,27 +30,27 @@ MOUNTED_PROJECT_FOLDER = "/project_folder"
 WORKING_FOLDER = "/working_folder"
 # WORKING_FOLDER = "./"
 
-# def copy_mounted_folder_to_working_folder():
-#     cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
-#     print(cmd)
-#     sp.call(cmd.split())
-#     print(f"ls -laths {MOUNTED_PROJECT_FOLDER}")
-#     sp.call(f"ls -laths {MOUNTED_PROJECT_FOLDER}", shell=True)
-#     print(f"ls -laths {WORKING_FOLDER}")
-#     sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
-#     print(f"ls -laths {WORKING_FOLDER}/project_folder")
-#     sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
-#
-#     cmd = f"mv ./project_folder *"
-#     print(cmd)
-#     sp.call(cmd.split())
-#     print(f"ls -laths {WORKING_FOLDER}")
-#     sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
-#     print(f"ls -laths {WORKING_FOLDER}/project_folder")
-#     sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
-#
-#
-# copy_mounted_folder_to_working_folder()
+def copy_mounted_folder_to_working_folder():
+    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
+    print(cmd)
+    sp.call(cmd.split())
+    print(f"ls -laths {MOUNTED_PROJECT_FOLDER}")
+    sp.call(f"ls -laths {MOUNTED_PROJECT_FOLDER}", shell=True)
+    print(f"ls -laths {WORKING_FOLDER}")
+    sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
+    print(f"ls -laths {WORKING_FOLDER}/project_folder")
+    sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
+
+    cmd = f"mv ./project_folder *"
+    print(cmd)
+    sp.call(cmd.split())
+    print(f"ls -laths {WORKING_FOLDER}")
+    sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
+    print(f"ls -laths {WORKING_FOLDER}/project_folder")
+    sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
+
+
+copy_mounted_folder_to_working_folder()
 
 
 def make_command_file(path_to_debug_info, prefix_code=''):

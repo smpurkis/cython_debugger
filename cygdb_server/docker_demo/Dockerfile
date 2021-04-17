@@ -24,11 +24,11 @@ RUN python2.7 -m pip install cython==3.0a6
 RUN python3.8 -m pip install cython==3.0a6
 RUN python3.8-dbg -m pip install cython==3.0a6
 
-RUN echo 35
+RUN echo 39
 RUN git clone https://github.com/smpurkis/cython_debugger.git
 WORKDIR ./cython_debugger/cygdb_server
 RUN python3.8 -m pip install -r requirements.txt
-#WORKDIR /
+WORKDIR /working_folder
 
 
 #CMD python3.8 Cygdb_terminal.py -p python3.8-dbg -f main.py; /bin/bash
