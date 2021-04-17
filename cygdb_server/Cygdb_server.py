@@ -76,7 +76,7 @@ def make_command_file(path_to_debug_info, prefix_code=''):
     debug_files = [debug_file.as_posix() for debug_file in
                    Path(WORKING_FOLDER, path_to_debug_info, "cython_debug", ).glob("cython_debug_info_*")]
     print("pathlib debug2 ", debug_files)
-    assert len(debug_files) == 0
+    # assert len(debug_files) > 0
 
     gdb_cy_configure_path = Path(WORKING_FOLDER, "cython_debug", "gdb_configuration_file")
     gdb_cy_configure_path.parent.mkdir(exist_ok=True)
