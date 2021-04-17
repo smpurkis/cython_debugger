@@ -24,7 +24,8 @@ RUN python2.7 -m pip install cython==3.0a6
 RUN python3.8 -m pip install cython==3.0a6
 RUN python3.8-dbg -m pip install cython==3.0a6
 
-RUN echo 15
+RUN echo 17
+#RUN apt-get install -y rsync
 RUN git clone https://github.com/smpurkis/cython_debugger.git
 WORKDIR ./cython_debugger/cygdb_server
 RUN python3.8 -m pip install -r requirements.txt
@@ -32,7 +33,8 @@ RUN python3.8 -m pip install -r requirements.txt
 
 #CMD python3.8 Cygdb_terminal.py -p python3.8-dbg -f main.py; /bin/bash
 #CMD which gdb; gdb --version; /bin/bash
+#RUN rsync -r /project_folder/ /working_folder
 EXPOSE 3456
-#CMD /bin/bash
-CMD python3.8 Cygdb_server.py
+CMD /bin/bash
+#CMD python3.8 Cygdb_server.py
 #CMD python3.8 Cygdb_terminal.py -p python3.8-dbg -f main.py; python3.8 Cygdb_server.py; /bin/bash

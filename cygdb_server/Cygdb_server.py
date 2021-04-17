@@ -26,17 +26,17 @@ from cygdb_commands import CygdbController
 
 logger = logging.getLogger(__name__)
 
-MOUNTED_PROJECT_FOLDER = "/project_folder"
-WORKING_FOLDER = "/working_folder"
+# MOUNTED_PROJECT_FOLDER = "/project_folder"
+WORKING_FOLDER = "/project_folder"
 
 
-def copy_mounted_folder_to_working_folder():
-    cmd = f"rsync -r {MOUNTED_PROJECT_FOLDER} {WORKING_FOLDER}"
-    print(cmd)
-    sp.call(cmd.split())
-
-
-copy_mounted_folder_to_working_folder()
+# def copy_mounted_folder_to_working_folder():
+#     cmd = f"rsync -r {MOUNTED_PROJECT_FOLDER} {WORKING_FOLDER}"
+#     print(cmd)
+#     sp.call(cmd.split())
+#
+#
+# copy_mounted_folder_to_working_folder()
 
 
 def make_command_file(path_to_debug_info, prefix_code=''):
