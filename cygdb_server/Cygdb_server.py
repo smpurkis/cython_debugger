@@ -27,37 +27,39 @@ from cygdb_commands import CygdbController
 logger = logging.getLogger(__name__)
 
 MOUNTED_PROJECT_FOLDER = "/project_folder"
-WORKING_FOLDER = "/working_folder"
+# WORKING_FOLDER = "/working_folder"
+WORKING_FOLDER = "./"
 
-
-def copy_mounted_folder_to_working_folder():
-    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
-    print(cmd)
-    sp.call(cmd.split())
-    print(f"ls -laths {MOUNTED_PROJECT_FOLDER}")
-    sp.call(f"ls -laths {MOUNTED_PROJECT_FOLDER}", shell=True)
-    print(f"ls -laths {WORKING_FOLDER}")
-    sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
-    print(f"ls -laths {WORKING_FOLDER}/project_folder")
-    sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
-
-    cmd = f"mv ./project_folder *"
-    print(cmd)
-    sp.call(cmd.split())
-    print(f"ls -laths {WORKING_FOLDER}")
-    sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
-    print(f"ls -laths {WORKING_FOLDER}/project_folder")
-    sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
-
-
-copy_mounted_folder_to_working_folder()
+# def copy_mounted_folder_to_working_folder():
+#     cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
+#     print(cmd)
+#     sp.call(cmd.split())
+#     print(f"ls -laths {MOUNTED_PROJECT_FOLDER}")
+#     sp.call(f"ls -laths {MOUNTED_PROJECT_FOLDER}", shell=True)
+#     print(f"ls -laths {WORKING_FOLDER}")
+#     sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
+#     print(f"ls -laths {WORKING_FOLDER}/project_folder")
+#     sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
+#
+#     cmd = f"mv ./project_folder *"
+#     print(cmd)
+#     sp.call(cmd.split())
+#     print(f"ls -laths {WORKING_FOLDER}")
+#     sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
+#     print(f"ls -laths {WORKING_FOLDER}/project_folder")
+#     sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
+#
+#
+# copy_mounted_folder_to_working_folder()
 
 
 def make_command_file(path_to_debug_info, prefix_code=''):
     pattern = os.path.join(path_to_debug_info,
                            'cython_debug',
                            'cython_debug_info_*')
-    debug_files = glob.glob(pattern)
+    print(f"pattern: {pattern}")
+    debug_files = list(Path("./").glob(pattern))
+    assert len(debug_files) == 0
 
     gdb_cy_configure_path = Path(WORKING_FOLDER, "cython_debug", "gdb_configuration_file")
     gdb_cy_configure_path.parent.mkdir(exist_ok=True)
