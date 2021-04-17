@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 
 MOUNTED_PROJECT_FOLDER = "/project_folder"
 WORKING_FOLDER = "/working_folder"
+
+
 # WORKING_FOLDER = "./"
 
 def copy_mounted_folder_to_working_folder():
@@ -41,7 +43,7 @@ def copy_mounted_folder_to_working_folder():
     print(f"ls -laths {WORKING_FOLDER}/project_folder")
     sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
 
-    cmd = f"mv ./project_folder *"
+    cmd = f"mv /project_folder {WORKING_FOLDER}"
     print(cmd)
     sp.call(cmd.split())
     print(f"ls -laths {WORKING_FOLDER}")
@@ -66,7 +68,8 @@ def make_command_file(path_to_debug_info, prefix_code=''):
     print("debug files ", debug_files)
     debug_files = list(Path(WORKING_FOLDER).glob(pattern))
     print("pathlib debug ", debug_files)
-    debug_files = [debug_file.as_posix() for debug_file in Path(path_to_debug_info, "cython_debug",).glob("cython_debug_info_*")]
+    debug_files = [debug_file.as_posix() for debug_file in
+                   Path(path_to_debug_info, "cython_debug", ).glob("cython_debug_info_*")]
     print("pathlib debug2 ", debug_files)
     assert len(debug_files) == 0
 
