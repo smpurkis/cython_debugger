@@ -61,9 +61,14 @@ def make_command_file(path_to_debug_info, prefix_code=''):
     pattern = os.path.join(path_to_debug_info,
                            'cython_debug',
                            'cython_debug_info_*')
+    debug_files = glob.glob(pattern)
     print(f"pattern: {pattern}")
-    debug_files = list(Path("./").glob(pattern))
-    assert len(debug_files) == 0
+    print("debug files ", debug_files)
+    debug_files = list(Path(WORKING_FOLDER).glob(pattern))
+    print("pathlib debug ", debug_files)
+    debug_files = [debug_file.as_posix() for debug_file in Path(path_to_debug_info, "cython_debug",).glob("cython_debug_info_*")]
+    print("pathlib debug2 ", debug_files)
+    # assert len(debug_files) == 0
 
     gdb_cy_configure_path = Path(WORKING_FOLDER, "cython_debug", "gdb_configuration_file")
     gdb_cy_configure_path.parent.mkdir(exist_ok=True)
@@ -108,6 +113,7 @@ def make_command_file(path_to_debug_info, prefix_code=''):
         f.write("file %s\n" % interpreter)
         print("debug files ", debug_files)
         print("debug fns,", [fn for fn in debug_files])
+        print('\n'.join('cy import %s\n' % fn for fn in debug_files))
         f.write('\n'.join('cy import %s\n' % fn for fn in debug_files))
         f.write(textwrap.dedent('''\
             python
