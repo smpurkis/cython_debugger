@@ -27,7 +27,7 @@ from cygdb_commands import CygdbController
 logger = logging.getLogger(__name__)
 
 MOUNTED_PROJECT_FOLDER = "/project_folder"
-PROJECT_FOLDER = "./"
+PROJECT_FOLDER = "/project_folder"
 
 def make_command_file(path_to_debug_info, prefix_code=''):
     pattern = os.path.join(path_to_debug_info,
