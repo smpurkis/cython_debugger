@@ -26,17 +26,19 @@ from cygdb_commands import CygdbController
 
 logger = logging.getLogger(__name__)
 
-# MOUNTED_PROJECT_FOLDER = "/project_folder"
-WORKING_FOLDER = "/project_folder"
+MOUNTED_PROJECT_FOLDER = "/project_folder"
+WORKING_FOLDER = "/working_folder"
 
 
-# def copy_mounted_folder_to_working_folder():
-#     cmd = f"rsync -r {MOUNTED_PROJECT_FOLDER} {WORKING_FOLDER}"
-#     print(cmd)
-#     sp.call(cmd.split())
-#
-#
-# copy_mounted_folder_to_working_folder()
+def copy_mounted_folder_to_working_folder():
+    cmd = f"cp {MOUNTED_PROJECT_FOLDER} {WORKING_FOLDER}"
+    print(cmd)
+    sp.call(cmd.split())
+    sp.call(f"la {MOUNTED_PROJECT_FOLDER}", shell=True)
+    sp.call(f"la {WORKING_FOLDER}", shell=True)
+
+
+copy_mounted_folder_to_working_folder()
 
 
 def make_command_file(path_to_debug_info, prefix_code=''):
@@ -116,7 +118,7 @@ def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
 
     BUILD_CMD = f"{python_debug_executable_path} setup.py build_ext --inplace --force"
     print(BUILD_CMD)
-    build_outputs = sp.run(BUILD_CMD.split(" "), cwd=WORKING_FOLDER, stdout=sp.PIPE, stderr=sp.PIPE)
+    build_outputs = sp.run(BUILD_CMD.split(" "), stdout=sp.PIPE, stderr=sp.PIPE)
 
     stdout = build_outputs.stdout.decode()
     stderr = build_outputs.stderr.decode()
