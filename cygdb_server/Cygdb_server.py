@@ -31,7 +31,7 @@ WORKING_FOLDER = "/working_folder"
 
 
 def copy_mounted_folder_to_working_folder():
-    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
+    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER} {WORKING_FOLDER}"
     print(cmd)
     sp.call(cmd.split())
     print(f"ls -laths {MOUNTED_PROJECT_FOLDER}")
