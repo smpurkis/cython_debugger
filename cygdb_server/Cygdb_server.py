@@ -43,13 +43,17 @@ def copy_mounted_folder_to_working_folder():
     print(f"ls -laths {WORKING_FOLDER}/project_folder")
     sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
 
-    cmd = f"mv /project_folder {WORKING_FOLDER}"
+    cmd = f"mv .{WORKING_FOLDER}/project_folder {WORKING_FOLDER}"
     print(cmd)
     sp.call(cmd.split())
+
     print(f"ls -laths {WORKING_FOLDER}")
     sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
     print(f"ls -laths {WORKING_FOLDER}/project_folder")
     sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
+
+    print(f"pwd")
+    sp.call(f"pwd", shell=True)
 
 
 copy_mounted_folder_to_working_folder()
