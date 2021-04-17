@@ -103,9 +103,10 @@ def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
     breakpoints.
     """
 
-    BUILD_CMD = f"{python_debug_executable_path} {cython_setup_file} build_ext --inplace --force"
+    BUILD_CMD = f"cd {PROJECT_FOLDER}; {python_debug_executable_path} setup.py build_ext --inplace --force"
     print(BUILD_CMD)
     build_outputs = sp.run(BUILD_CMD.split(), stdout=sp.PIPE, stderr=sp.PIPE)
+
     stdout = build_outputs.stdout.decode()
     stderr = build_outputs.stderr.decode()
     if "Error compiling Cython file" in stderr:
