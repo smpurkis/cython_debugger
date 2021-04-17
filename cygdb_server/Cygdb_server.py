@@ -27,30 +27,31 @@ from cygdb_commands import CygdbController
 logger = logging.getLogger(__name__)
 
 MOUNTED_PROJECT_FOLDER = "/project_folder"
-WORKING_FOLDER = "/working_folder"
+COPY_ROOT_FOLDER = "/working_folder"
+WORKING_FOLDER = "/working_folder/project_folder"
 
 
 # WORKING_FOLDER = "./"
 
 def copy_mounted_folder_to_working_folder():
-    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
+    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {COPY_ROOT_FOLDER}"
     print(cmd)
     sp.call(cmd.split())
     print(f"ls -laths {MOUNTED_PROJECT_FOLDER}")
     sp.call(f"ls -laths {MOUNTED_PROJECT_FOLDER}", shell=True)
-    print(f"ls -laths {WORKING_FOLDER}")
-    sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
-    print(f"ls -laths {WORKING_FOLDER}/project_folder")
-    sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
+    print(f"ls -laths {COPY_ROOT_FOLDER}")
+    sp.call(f"ls -laths {COPY_ROOT_FOLDER}", shell=True)
+    print(f"ls -laths {COPY_ROOT_FOLDER}/project_folder")
+    sp.call(f"ls -laths {COPY_ROOT_FOLDER}/project_folder", shell=True)
 
-    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
+    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {COPY_ROOT_FOLDER}"
     print(cmd)
     sp.call(cmd.split())
 
-    print(f"ls -laths {WORKING_FOLDER}")
-    sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
-    print(f"ls -laths {WORKING_FOLDER}/project_folder")
-    sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
+    print(f"ls -laths {COPY_ROOT_FOLDER}")
+    sp.call(f"ls -laths {COPY_ROOT_FOLDER}", shell=True)
+    print(f"ls -laths {COPY_ROOT_FOLDER}/project_folder")
+    sp.call(f"ls -laths {COPY_ROOT_FOLDER}/project_folder", shell=True)
 
     print(f"pwd")
     sp.call(f"pwd", shell=True)
