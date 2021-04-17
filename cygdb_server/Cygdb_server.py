@@ -55,6 +55,8 @@ WORKING_FOLDER = "./"
 
 def make_command_file(path_to_debug_info, prefix_code=''):
     print(Path("./").absolute())
+    print(list(Path("./").glob("*")))
+    print(list(Path("./", "cython_debug").glob("*")))
 
     pattern = os.path.join(path_to_debug_info,
                            'cython_debug',
