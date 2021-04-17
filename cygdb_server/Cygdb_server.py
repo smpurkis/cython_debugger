@@ -31,7 +31,9 @@ WORKING_FOLDER = "/working_folder"
 
 
 def copy_mounted_folder_to_working_folder():
-    sp.call(f"rsync -r {MOUNTED_PROJECT_FOLDER} {WORKING_FOLDER}")
+    cmd = f"rsync -r {MOUNTED_PROJECT_FOLDER} {WORKING_FOLDER}"
+    print(cmd)
+    sp.call(cmd.split())
 
 
 copy_mounted_folder_to_working_folder()
