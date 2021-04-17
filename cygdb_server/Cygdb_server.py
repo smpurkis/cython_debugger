@@ -74,7 +74,7 @@ def make_command_file(path_to_debug_info, prefix_code=''):
     debug_files = list(Path(WORKING_FOLDER).glob(pattern))
     print("pathlib debug ", debug_files)
     debug_files = [debug_file.as_posix() for debug_file in
-                   Path(path_to_debug_info, "cython_debug", ).glob("cython_debug_info_*")]
+                   Path(WORKING_FOLDER, path_to_debug_info, "cython_debug", ).glob("cython_debug_info_*")]
     print("pathlib debug2 ", debug_files)
     assert len(debug_files) == 0
 
