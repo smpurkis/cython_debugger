@@ -1,5 +1,6 @@
 import ast
 from pathlib import Path
+from pprint import pprint
 
 import regex as re
 
@@ -69,6 +70,7 @@ class CygdbController:
         if not self.breakpoint_lines.get(full_path, False):
             self.breakpoint_lines[full_path] = list(range(1, len(lines) + 1))
         linenos = self.breakpoint_lines[full_path]
+        pprint(linenos)
         corrected_lineno = linenos.index(int(lineno))
         print("corrected_lineno: ", corrected_lineno, full_path, lineno, to_breakpoint)
         check = 0
