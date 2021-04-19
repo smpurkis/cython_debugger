@@ -82,9 +82,9 @@ class CygdbController:
                 break
         print("check/old value: ", check)
         if to_breakpoint:
-            corrected_lineno = corrected_lineno-1
-            assert "breakpoint" in str(linenos[corrected_lineno])
-            return str(corrected_lineno-1)
+            corrected_lineno = corrected_lineno
+            assert "breakpoint" in str(linenos[corrected_lineno]-1)
+            return str(corrected_lineno)
         else:
             return str(corrected_lineno)
 
