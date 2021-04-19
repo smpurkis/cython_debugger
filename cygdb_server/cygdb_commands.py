@@ -236,7 +236,7 @@ class CygdbController:
                 res = resp["payload"].replace("\\e", "").replace("[94m", "").replace("[39;49;00m", "").replace(
                     "[96m", "").replace("[92m", "").replace("[33m", "").replace("[90m", "").strip("\\n")
                 res = "\n".join(res.split("\\n"))
-                print(res)
+                print("gdb output: ", res)
                 formatted_resp.append(res)
         return formatted_resp
 
