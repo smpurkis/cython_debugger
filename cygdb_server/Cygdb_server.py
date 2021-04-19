@@ -17,6 +17,7 @@ import subprocess as sp
 import textwrap
 from pathlib import Path
 from typing import List
+import shutil
 
 import uvicorn
 from fastapi import FastAPI, Body
@@ -42,6 +43,15 @@ def copy_mounted_folder_to_working_folder():
     print(f"pwd")
     sp.call(f"pwd", shell=True)
 
+
+def recopy_mounted_folder_to_working_folder():
+    cmd = f"rm -rdf {WORKING_FOLDER}"
+    print(cmd)
+    sp.call(cmd.split())
+
+    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
+    print(cmd)
+    sp.call(cmd.split())
 
 copy_mounted_folder_to_working_folder()
 
@@ -198,7 +208,7 @@ class CythonServer:
         return self.format_progress(resp)
 
     def run_debugger(self):
-        copy_mounted_folder_to_working_folder()
+        recopy_mounted_folder_to_working_folder()
         output, successful_compile = self.setup_files()
         if not successful_compile:
             return {
