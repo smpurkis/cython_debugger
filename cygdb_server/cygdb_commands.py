@@ -67,7 +67,7 @@ class CygdbController:
             if linenos[i] != "breakpoint":
                 print("not break")
                 corrected_lineno += 1
-            if linenos[i] == lineno:
+            if linenos[i] == int(lineno):
                 print("returning string")
                 return str(corrected_lineno)
 
