@@ -24,11 +24,11 @@ class Frame:
         self.trace = trace
         self.process_id = process_id
         self.thread_id = thread_id
-        self.breakpoint_lines = {}
 
 
 class CygdbController:
     def __init__(self, command):
+        self.breakpoint_lines = {}
         self.command = command
         self.gdb = GdbController(command=command)
         self.trace = []
@@ -56,24 +56,40 @@ class CygdbController:
         self.get_frame()
         return self.frame.trace
 
+    def correct_line_number(self, lineno, full_path, lines):
+        if self.breakpoint_lines.get(full_path, False):
+            self.breakpoint_lines[full_path] = list(range(1, len(lines)+1))
+        linenos = self.breakpoint_lines["full_path"]
+        corrected_lineno = 0
+        for i in range(len(linenos)):
+            if linenos[i] != "breakpoint":
+                corrected_lineno += 1
+            if linenos[i] == lineno:
+                return str(corrected_lineno)
+
     def add_print_to_file(self, filename="", lineno="", full_path=""):
         file_path = Path(full_path)
-        lines = file_path.read_text().split("\n")
-        code_on_line_to_break = lines[max(int(lineno)+1, 1)]
+        lines = file_path.open().read().split("\n")
+        lineno_corrected = self.correct_line_number(lineno, full_path, lines)
+        lineno_int = max(int(lineno_corrected) - 1, 0)
+        code_on_line_to_break = lines[lineno_int]
+        check_line = re.match(r"^\W+(\S+)", code_on_line_to_break)
+        if check_line is None:
+            return False
         leading_spaces = re.match(r"^(\W+)", code_on_line_to_break)
         if leading_spaces is not None:
             leading_spaces = leading_spaces.group(0)
         else:
             leading_spaces = ""
         line_to_add = f"{leading_spaces}print()  # empty print to prevent Cython optimizing out this line"
-        lines.insert(max(int(lineno) - 1, 1), line_to_add)
+        lines.insert(lineno_int, line_to_add)
+        self.breakpoint_lines[full_path].insert(lineno_int, "breakpoint")
         text = "\n".join(lines)
         file_path.unlink(missing_ok=False)
         fp = file_path.open("w")
         fp.write(text)
-        from pprint import pprint
-        pprint(file_path.read_text())
-
+        fp.close()
+        return True
 
     def add_breakpoint(self, fn="", filename="", lineno="", full_path=""):
         lineno = str(lineno)
@@ -85,7 +101,9 @@ class CygdbController:
             ))
             resp = self.gdb.write(f"cy break {fn}")
         elif len(filename) > 0 and len(lineno) > 0:
-            self.add_print_to_file(filename, lineno, full_path)
+            valid_line = self.add_print_to_file(filename, lineno, full_path)
+            if not valid_line:
+                return valid_line
             self.breakpoints.append(dict(
                 type="file",
                 filename=Path(filename).stem,
@@ -93,7 +111,7 @@ class CygdbController:
             ))
             resp = self.gdb.write(f"cy break {stem}:{lineno}")
         else:
-            return None
+            return False
         return True
 
     def get_frame(self):
