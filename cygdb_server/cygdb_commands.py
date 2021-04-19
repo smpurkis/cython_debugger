@@ -59,19 +59,17 @@ class CygdbController:
     def correct_line_number(self, lineno, full_path):
         full_path = Path(full_path)
         lines = full_path.open().read().split("\n")
+        from pprint import pprint
+        pprint(lines)
         if not self.breakpoint_lines.get(full_path, False):
             self.breakpoint_lines[full_path] = list(range(1, len(lines) + 1))
         linenos = self.breakpoint_lines[full_path]
-        print(linenos)
         corrected_lineno = 0
 
         for i in range(len(linenos)):
-            print(i)
             if "breakpoint" not in str(linenos[i]):
-                print("not break")
                 corrected_lineno += 1
             if linenos[i] == int(lineno):
-                print("returning string")
                 return str(corrected_lineno)
         raise Exception(f"Breakpoint {lineno} in {full_path} not found!")
 
