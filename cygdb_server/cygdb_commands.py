@@ -102,7 +102,7 @@ class CygdbController:
         lineno = str(lineno)
         stem = Path(filename).stem
         if len(filename) > 0 and len(lineno) > 0:
-            valid_line = self.add_print_to_file(filename, lineno, full_path)
+            valid_line = self.add_print_to_file(filename, lineno, Path(full_path))
             if not valid_line:
                 return valid_line
             self.breakpoints.append(dict(
