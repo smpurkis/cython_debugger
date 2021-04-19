@@ -218,6 +218,7 @@ class CygdbController:
                             at_breakpoint = True
                             break
                 if at_breakpoint:
+                    print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'])}")
                     break
                 self.next()
 
