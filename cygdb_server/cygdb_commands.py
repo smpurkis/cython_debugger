@@ -151,6 +151,7 @@ class CygdbController:
                 function_or_object=groups[2],
                 memory_address=groups[1],
             )
+            print("backtrace line: ", backtrace)
             if groups[3] != "":
                 backtrace["file_parent"] = groups[3]
             backtrace_stack.append(backtrace)
