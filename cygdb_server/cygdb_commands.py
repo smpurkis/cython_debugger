@@ -66,7 +66,7 @@ class CygdbController:
 
         for i in range(len(linenos)):
             print(i)
-            if "breakpoint" not in linenos[i]:
+            if "breakpoint" not in str(linenos[i]):
                 print("not break")
                 corrected_lineno += 1
             if linenos[i] == int(lineno):
