@@ -145,10 +145,10 @@ def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
 
     stdout = build_outputs.stdout.decode()
     stderr = build_outputs.stderr.decode()
+    print("stdout", stdout)
+    print("stderr", stderr)
     if "Error compiling Cython file" in stderr or "doesn't match any files" in stderr:
         return stderr.split("\n"), False
-    print(stdout)
-    print(stderr)
 
     return stdout.split("\n"), True
 
