@@ -60,7 +60,8 @@ class CygdbController:
         full_path = Path(full_path)
         lines = full_path.open().read().split("\n")
         from pprint import pprint
-        pprint(lines)
+        lines_with_i = [[i+1, line] for i, line in enumerate(lines)]
+        pprint(lines_with_i)
         if not self.breakpoint_lines.get(full_path, False):
             self.breakpoint_lines[full_path] = list(range(1, len(lines) + 1))
         linenos = self.breakpoint_lines[full_path]

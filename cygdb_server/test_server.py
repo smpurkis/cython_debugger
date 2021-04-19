@@ -100,7 +100,7 @@ def test_continue_get():
         "ended": False,
         "breakpoint": {
             "filename": "demo.pyx",
-            "lineno": "26"
+            "lineno": "25"
         }
     }
 

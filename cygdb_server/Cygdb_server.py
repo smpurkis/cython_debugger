@@ -198,6 +198,7 @@ class CythonServer:
         return self.format_progress(resp)
 
     def run_debugger(self):
+        copy_mounted_folder_to_working_folder()
         output, successful_compile = self.setup_files()
         if not successful_compile:
             return {
