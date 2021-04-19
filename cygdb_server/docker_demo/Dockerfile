@@ -24,7 +24,7 @@ RUN python2.7 -m pip install cython==3.0a6
 RUN python3.8 -m pip install cython==3.0a6
 RUN python3.8-dbg -m pip install cython==3.0a6
 
-RUN echo 75
+RUN echo 76
 RUN git clone https://github.com/smpurkis/cython_debugger.git
 WORKDIR ./cython_debugger/cygdb_server
 RUN python3.8 -m pip install -r requirements.txt
