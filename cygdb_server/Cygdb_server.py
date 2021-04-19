@@ -27,9 +27,6 @@ from cygdb_commands import CygdbController
 logger = logging.getLogger(__name__)
 
 MOUNTED_PROJECT_FOLDER = "/project_folder"
-COPY_ROOT_FOLDER = "/working_folder"
-# COPY_ROOT_FOLDER = "./"
-# WORKING_FOLDER = COPY_ROOT_FOLDER + MOUNTED_PROJECT_FOLDER
 
 
 WORKING_FOLDER = "./working_folder"
@@ -148,9 +145,9 @@ def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
     print("stdout", stdout)
     print("stderr", stderr)
     if "Error compiling Cython file" in stderr or "doesn't match any files" in stderr:
-        return stderr.split("\n"), False
+        return stderr, False
 
-    return stdout.split("\n"), True
+    return stdout, True
 
 
 class Config(BaseModel):
@@ -269,8 +266,10 @@ def set_breakpoints(source: str = Body(...), breakpoints: List[int] = Body(...))
     for lineno in breakpoints:
         valid = cython_server.cygdb.add_breakpoint(
             filename=source,
-            lineno=lineno
+            lineno=lineno,
+            full_path=Path(WORKING_FOLDER, source).as_posix()
         )
+        print(Path(WORKING_FOLDER, source).as_posix())
         if valid:
             valid_breakpoints.append(lineno)
     return {

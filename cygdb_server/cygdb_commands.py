@@ -1,9 +1,7 @@
 import ast
-import time
 from pathlib import Path
 
 import regex as re
-import json
 
 from pygdbmi.gdbcontroller import GdbController
 
@@ -26,6 +24,7 @@ class Frame:
         self.trace = trace
         self.process_id = process_id
         self.thread_id = thread_id
+        self.breakpoint_lines = {}
 
 
 class CygdbController:
@@ -57,7 +56,26 @@ class CygdbController:
         self.get_frame()
         return self.frame.trace
 
-    def add_breakpoint(self, fn="", filename="", lineno=""):
+    def add_print_to_file(self, filename="", lineno="", full_path=""):
+        file_path = Path(full_path)
+        lines = file_path.read_text().split("\n")
+        code_on_line_to_break = lines[max(int(lineno)+1, 1)]
+        leading_spaces = re.match(r"^(\W+)", code_on_line_to_break)
+        if leading_spaces is not None:
+            leading_spaces = leading_spaces.group(0)
+        else:
+            leading_spaces = ""
+        line_to_add = f"{leading_spaces}print()  # empty print to prevent Cython optimizing out this line"
+        lines.insert(max(int(lineno) - 1, 1), line_to_add)
+        text = "\n".join(lines)
+        file_path.unlink(missing_ok=False)
+        fp = file_path.open("w")
+        fp.write(text)
+        from pprint import pprint
+        pprint(file_path.read_text())
+
+
+    def add_breakpoint(self, fn="", filename="", lineno="", full_path=""):
         lineno = str(lineno)
         stem = Path(filename).stem
         if len(fn) > 0:
@@ -66,19 +84,16 @@ class CygdbController:
                 name=fn
             ))
             resp = self.gdb.write(f"cy break {fn}")
-            # self.next()
         elif len(filename) > 0 and len(lineno) > 0:
+            self.add_print_to_file(filename, lineno, full_path)
             self.breakpoints.append(dict(
                 type="file",
                 filename=Path(filename).stem,
                 lineno=lineno
             ))
             resp = self.gdb.write(f"cy break {stem}:{lineno}")
-            # self.next()
         else:
             return None
-
-        # resp = self.print_output(resp)
         return True
 
     def get_frame(self):
