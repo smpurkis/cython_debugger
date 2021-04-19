@@ -206,7 +206,7 @@ class CygdbController:
                 at_breakpoint = False
                 if bp["type"] == "file":
                     for trace in traces:
-                        corrected_lineno = self.correct_line_number(bp["full_path"], bp["lineno"])
+                        corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"])
                         if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{corrected_lineno}':
                             at_breakpoint = True
                             break
