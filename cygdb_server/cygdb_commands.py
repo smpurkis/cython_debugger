@@ -225,7 +225,9 @@ class CygdbController:
                 if bp["type"] == "file":
                     for trace in traces:
                         corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=True)
-                        if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{corrected_lineno}':
+                        print("trace number: ", f'{trace["filename"].split(".")[0]}:{trace["lineno"]}')
+                        print("Checking if at correct lineno: ", f'{bp["filename"]}:{bp["lineno"]}')
+                        if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{bp["lineno"]}':
                             at_breakpoint = True
                             break
                 if at_breakpoint:
