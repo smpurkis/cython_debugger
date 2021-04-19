@@ -36,6 +36,13 @@ class CygdbController:
         self.breakpoints = []
         self.current_breakpoint = None
 
+    def clear_all(self):
+        self.breakpoints = []
+        self.current_breakpoint = None
+        self.trace = []
+        self.frame = None
+        self.breakpoint_lines = {}
+
     def exit_gdb(self):
         self.gdb.exit()
 

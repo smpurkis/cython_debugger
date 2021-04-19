@@ -209,6 +209,7 @@ class CythonServer:
 
     def run_debugger(self):
         recopy_mounted_folder_to_working_folder()
+        self.restart_debugger()
         output, successful_compile = self.setup_files()
         if not successful_compile:
             return {
@@ -227,6 +228,7 @@ class CythonServer:
 
     def restart_debugger(self):
         self.cygdb.exit_gdb()
+        self.cygdb.clear_all()
         self.cygdb.gdb.spawn_new_gdb_subprocess()
 
 
@@ -236,6 +238,11 @@ cython_server.gdb_executable_path = "/usr/local/bin/gdb"
 cython_server.gdb_configuration_file = "cython_debug/gdb_configuration_file"
 cython_server.debug_path = "."
 
+# @app.get("/Restart")
+def restart():
+    global cython_server
+    cython_server.restart_debugger()
+    return
 
 @app.post("/setFileToDebug")
 def set_file_to_debug(source: str = Body(..., embed=True)):
@@ -304,11 +311,7 @@ def get_frame():
     return cython_server.cygdb.frame
 
 
-@app.get("/Restart")
-def restart():
-    global cython_server
-    cython_server.restart_debugger()
-    return
+
 
 
 if __name__ == '__main__':
