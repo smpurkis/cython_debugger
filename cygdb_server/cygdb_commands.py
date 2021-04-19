@@ -77,6 +77,7 @@ class CygdbController:
                 check += 1
             if linenos[i] == int(lineno):
                 check = str(check)
+                break
         print("check/old value: ", check)
         if to_breakpoint:
             corrected_lineno = corrected_lineno-1
