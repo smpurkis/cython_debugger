@@ -177,7 +177,8 @@ class CythonServer:
     def setup_files(self):
         if self.debug_path and self.python_debug_executable_path:
             output, successful_compile = cythonize_files(self.python_debug_executable_path)
-            self.gdb_configuration_file = make_command_file(self.debug_path)
+            if successful_compile:
+                self.gdb_configuration_file = make_command_file(self.debug_path)
             return output, successful_compile
 
     def format_progress(self, resp):
