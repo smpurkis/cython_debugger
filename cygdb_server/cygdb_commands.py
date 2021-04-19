@@ -57,6 +57,7 @@ class CygdbController:
         return self.frame.trace
 
     def correct_line_number(self, lineno, full_path):
+        full_path = Path(full_path)
         lines = full_path.open().read().split("\n")
         if not self.breakpoint_lines.get(full_path, False):
             self.breakpoint_lines[full_path] = list(range(1, len(lines) + 1))
