@@ -63,20 +63,19 @@ class CygdbController:
         self.get_frame()
         return self.frame.trace
 
-    def correct_line_number(self, lineno, full_path):
+    def correct_line_number(self, lineno, full_path, to_breakpoint=False):
         full_path = Path(full_path)
         lines = full_path.open().read().split("\n")
         if not self.breakpoint_lines.get(full_path, False):
             self.breakpoint_lines[full_path] = list(range(1, len(lines) + 1))
         linenos = self.breakpoint_lines[full_path]
-        corrected_lineno = 0
-
-        for i in range(len(linenos)):
-            if "breakpoint" not in str(linenos[i]):
-                corrected_lineno += 1
-            if linenos[i] == int(lineno):
-                return str(corrected_lineno)
-        raise Exception(f"Breakpoint {lineno} in {full_path} not found!")
+        corrected_lineno = linenos.index(int(lineno))
+        if to_breakpoint:
+            corrected_lineno = corrected_lineno-1
+            assert "breakpoint" in str(linenos[corrected_lineno])
+            return str(corrected_lineno-1)
+        else:
+            return str(corrected_lineno)
 
     def add_print_to_file(self, filename="", lineno="", full_path=None):
         file_path = Path(full_path)
@@ -214,12 +213,12 @@ class CygdbController:
                 at_breakpoint = False
                 if bp["type"] == "file":
                     for trace in traces:
-                        corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"])
+                        corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=True)
                         if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{corrected_lineno}':
                             at_breakpoint = True
                             break
                 if at_breakpoint:
-                    print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'])}")
+                    print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
                     break
                 self.next()
 
