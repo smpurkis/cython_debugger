@@ -60,11 +60,15 @@ class CygdbController:
         if not self.breakpoint_lines.get(full_path, False):
             self.breakpoint_lines[full_path] = list(range(1, len(lines)+1))
         linenos = self.breakpoint_lines[full_path]
+        print(linenos)
         corrected_lineno = 0
         for i in range(len(linenos)):
+            print(i)
             if linenos[i] != "breakpoint":
+                print("not break")
                 corrected_lineno += 1
             if linenos[i] == lineno:
+                print("returning string")
                 return str(corrected_lineno)
 
     def add_print_to_file(self, filename="", lineno="", full_path=""):
