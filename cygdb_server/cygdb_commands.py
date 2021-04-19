@@ -66,9 +66,6 @@ class CygdbController:
     def correct_line_number(self, lineno, full_path):
         full_path = Path(full_path)
         lines = full_path.open().read().split("\n")
-        from pprint import pprint
-        lines_with_i = [[i+1, line] for i, line in enumerate(lines)]
-        pprint(lines_with_i)
         if not self.breakpoint_lines.get(full_path, False):
             self.breakpoint_lines[full_path] = list(range(1, len(lines) + 1))
         linenos = self.breakpoint_lines[full_path]
@@ -98,6 +95,10 @@ class CygdbController:
         line_to_add = f"{leading_spaces}print()  # empty print to prevent Cython optimizing out this line"
         lines.insert(lineno_int, line_to_add)
         self.breakpoint_lines[full_path].insert(lineno_int, f"breakpoint-{lineno}")
+        from pprint import pprint
+        pprint(self.breakpoint_lines[full_path])
+        lines_with_i = [[i+1, line] for i, line in enumerate(lines)]
+        pprint(lines_with_i)
         text = "\n".join(lines)
         file_path.unlink(missing_ok=False)
         fp = file_path.open("w")
