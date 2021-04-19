@@ -42,9 +42,6 @@ def copy_mounted_folder_to_working_folder():
     print(f"ls -laths {WORKING_FOLDER}")
     sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
 
-    print(f"ls -laths {WORKING_FOLDER}/project_folder")
-    sp.call(f"ls -laths {WORKING_FOLDER}/project_folder", shell=True)
-
     print(f"pwd")
     sp.call(f"pwd", shell=True)
 
@@ -148,7 +145,7 @@ def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
 
     stdout = build_outputs.stdout.decode()
     stderr = build_outputs.stderr.decode()
-    if "Error compiling Cython file" in stderr:
+    if "Error compiling Cython file" in stderr or "doesn't match any files" in stderr:
         return stderr.split("\n"), False
     print(stdout)
     print(stderr)
