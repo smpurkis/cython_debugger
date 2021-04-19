@@ -70,6 +70,14 @@ class CygdbController:
             self.breakpoint_lines[full_path] = list(range(1, len(lines) + 1))
         linenos = self.breakpoint_lines[full_path]
         corrected_lineno = linenos.index(int(lineno))
+        print("corrected_lineno: ", corrected_lineno, full_path, lineno, to_breakpoint)
+        check = 0
+        for i in range(len(lines)):
+            if "breakpoint" not in str(linenos[i]):
+                check += 1
+            if linenos[i] == int(lineno):
+                check = str(check)
+        print("check/old value: ", check)
         if to_breakpoint:
             corrected_lineno = corrected_lineno-1
             assert "breakpoint" in str(linenos[corrected_lineno])
