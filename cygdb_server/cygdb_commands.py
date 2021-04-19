@@ -56,25 +56,28 @@ class CygdbController:
         self.get_frame()
         return self.frame.trace
 
-    def correct_line_number(self, lineno, full_path, lines):
+    def correct_line_number(self, lineno, full_path):
+        lines = full_path.open().read().split("\n")
         if not self.breakpoint_lines.get(full_path, False):
-            self.breakpoint_lines[full_path] = list(range(1, len(lines)+1))
+            self.breakpoint_lines[full_path] = list(range(1, len(lines) + 1))
         linenos = self.breakpoint_lines[full_path]
         print(linenos)
         corrected_lineno = 0
+
         for i in range(len(linenos)):
             print(i)
-            if linenos[i] != "breakpoint":
+            if "breakpoint" not in linenos[i]:
                 print("not break")
                 corrected_lineno += 1
             if linenos[i] == int(lineno):
                 print("returning string")
                 return str(corrected_lineno)
+        raise Exception(f"Breakpoint {lineno} in {full_path} not found!")
 
-    def add_print_to_file(self, filename="", lineno="", full_path=""):
+    def add_print_to_file(self, filename="", lineno="", full_path=None):
         file_path = Path(full_path)
         lines = file_path.open().read().split("\n")
-        lineno_corrected = self.correct_line_number(lineno, full_path, lines)
+        lineno_corrected = self.correct_line_number(lineno, full_path)
         lineno_int = max(int(lineno_corrected) - 1, 0)
         code_on_line_to_break = lines[lineno_int]
         check_line = re.match(r"^\W+(\S+)", code_on_line_to_break)
@@ -87,7 +90,7 @@ class CygdbController:
             leading_spaces = ""
         line_to_add = f"{leading_spaces}print()  # empty print to prevent Cython optimizing out this line"
         lines.insert(lineno_int, line_to_add)
-        self.breakpoint_lines[full_path].insert(lineno_int, "breakpoint")
+        self.breakpoint_lines[full_path].insert(lineno_int, f"breakpoint-{lineno}")
         text = "\n".join(lines)
         file_path.unlink(missing_ok=False)
         fp = file_path.open("w")
@@ -95,23 +98,18 @@ class CygdbController:
         fp.close()
         return True
 
-    def add_breakpoint(self, fn="", filename="", lineno="", full_path=""):
+    def add_breakpoint(self, filename="", lineno="", full_path=""):
         lineno = str(lineno)
         stem = Path(filename).stem
-        if len(fn) > 0:
-            self.breakpoints.append(dict(
-                type="fn",
-                name=fn
-            ))
-            resp = self.gdb.write(f"cy break {fn}")
-        elif len(filename) > 0 and len(lineno) > 0:
+        if len(filename) > 0 and len(lineno) > 0:
             valid_line = self.add_print_to_file(filename, lineno, full_path)
             if not valid_line:
                 return valid_line
             self.breakpoints.append(dict(
                 type="file",
                 filename=Path(filename).stem,
-                lineno=lineno
+                lineno=lineno,
+                full_path=full_path
             ))
             resp = self.gdb.write(f"cy break {stem}:{lineno}")
         else:
@@ -205,14 +203,10 @@ class CygdbController:
             print("running to next line")
             for bp in self.breakpoints:
                 at_breakpoint = False
-                if bp["type"] == "fn":
+                if bp["type"] == "file":
                     for trace in traces:
-                        if trace["function_or_object"] == f'{bp["name"]}()':
-                            at_breakpoint = True
-                            break
-                elif bp["type"] == "file":
-                    for trace in traces:
-                        if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{bp["lineno"]}':
+                        corrected_lineno = self.correct_line_number(bp["full_path"], bp["lineno"])
+                        if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{corrected_lineno}':
                             at_breakpoint = True
                             break
                 if at_breakpoint:
