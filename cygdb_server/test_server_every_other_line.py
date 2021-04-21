@@ -77,7 +77,7 @@ def test_launch_post():
 
 
 def test_continue_get():
-    breakpoint_lines_set = [str(i) for i in range(16, 21, 2)]
+    breakpoint_lines_set = [str(i) for i in range(18, 21, 2)]
     line_breaks = []
     for i in breakpoint_lines_set[1:]:
         print()

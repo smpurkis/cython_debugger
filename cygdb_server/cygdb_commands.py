@@ -35,11 +35,11 @@ class CygdbController:
         self.trace = []
         self.frame = None
         self.breakpoints = []
-        self.current_breakpoint = None
+        self.current_breakpoint = 0
 
     def clear_all(self):
         self.breakpoints = []
-        self.current_breakpoint = None
+        self.current_breakpoint = 0
         self.trace = []
         self.frame = None
         self.breakpoint_lines = {}
@@ -57,13 +57,14 @@ class CygdbController:
         return resp
 
     def cont(self):
-        resp = self.gdb.write("cy cont")
+        # resp = self.gdb.write("cy cont")
         # resp = self.gdb.write("cy next")
-        resp = self.print_output(resp)
+        # resp = self.print_output(resp)
         # self.next()
-        # self.get_to_next_cython_line()
+        self.get_to_next_cython_line()
         self.get_frame()
         print("trace", self.frame.trace)
+        self.current_breakpoint += 1
         return self.frame.trace
 
     def correct_line_number(self, lineno, full_path, to_breakpoint=False):
@@ -219,30 +220,42 @@ class CygdbController:
         while not at_breakpoint and iterations < 50:
             iterations += 1
             traces = self.backtrace()
+            print("Trace: ", traces[-1])
             if len(traces) == 0:
                 if iterations > 10:
                     raise Exception(f"Over allowed iterations: {iterations}")
                 continue
+            bp = self.breakpoints[self.current_breakpoint]
+            p0 = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=True)
+            p1 = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=False)
+            p = 0
             # print("running to next line")
-            for bp in self.breakpoints:
-                at_breakpoint = False
-                if bp["type"] == "file":
-                    for trace in traces:
-                        corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=True)
-                        print("trace number: ", f'{trace["filename"].split(".")[0]}:{trace["lineno"]}')
-                        print("Checking if at correct lineno: ", f'{bp["filename"]}:{bp["lineno"]}')
-                        if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{bp["lineno"]}':
+            # for bp in self.breakpoints:
+            at_breakpoint = False
+            if bp["type"] == "file":
+                for trace in [traces[-1]]:
+                    lines_to_next_breakpoint = 0
+                    corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=True)
+                    print("trace number: ", f'{trace["filename"].split(".")[0]}:{trace["lineno"]}')
+                    print("Checking if at correct lineno: ", f'{bp["filename"]}:{bp["lineno"]}')
+                    # if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{bp["lineno"]}':
+                    #     at_breakpoint = True
+                    #     break
+                    if trace["filename"].split(".")[0] == bp["filename"]:
+                        lines_to_next_breakpoint = int(corrected_lineno) - int(trace["lineno"])
+                        if abs(lines_to_next_breakpoint) <= 1:
                             at_breakpoint = True
                             break
-                if at_breakpoint:
-                    print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
-                    break
-                self.next()
+            if at_breakpoint:
+                print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
+                break
+            self.gdb.write(f"cy finish")
 
     def run(self):
         self.gdb.write(f"cy run", timeout_sec=1)
         self.get_to_next_cython_line()
         self.get_frame()
+        self.current_breakpoint += 1
         return self.frame.trace
 
     @staticmethod
