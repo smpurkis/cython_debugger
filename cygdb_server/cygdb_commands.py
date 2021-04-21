@@ -58,10 +58,12 @@ class CygdbController:
 
     def cont(self):
         resp = self.gdb.write("cy cont")
+        # resp = self.gdb.write("cy next")
         resp = self.print_output(resp)
         # self.next()
         # self.get_to_next_cython_line()
         self.get_frame()
+        print("trace", self.frame.trace)
         return self.frame.trace
 
     def correct_line_number(self, lineno, full_path, to_breakpoint=False):
@@ -72,16 +74,16 @@ class CygdbController:
         linenos = self.breakpoint_lines[full_path]
         # pprint(linenos)
         corrected_lineno = linenos.index(int(lineno))
-        # print("corrected_lineno: ", corrected_lineno, full_path, lineno, to_breakpoint)
-        # check = 0
-        # for i in range(len(lines)):
-        #     if "breakpoint" not in str(linenos[i]):
-        #         check += 1
-        #     if linenos[i] == int(lineno):
-        #         check = str(check)
-        #         break
+        print("corrected_lineno: ", corrected_lineno, full_path, lineno, to_breakpoint)
+        check = 0
+        for i in range(len(lines)):
+            if "breakpoint" not in str(linenos[i]):
+                check += 1
+            if linenos[i] == int(lineno):
+                check = str(check)
+                break
         # return str(check)
-        # print("check/old value: ", check)
+        print("check/old value: ", check)
         if to_breakpoint:
             corrected_lineno = corrected_lineno
             # assert "breakpoint" in str(linenos[corrected_lineno]-1)
@@ -227,13 +229,13 @@ class CygdbController:
                 if bp["type"] == "file":
                     for trace in traces:
                         corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=True)
-                        # print("trace number: ", f'{trace["filename"].split(".")[0]}:{trace["lineno"]}')
-                        # print("Checking if at correct lineno: ", f'{bp["filename"]}:{bp["lineno"]}')
+                        print("trace number: ", f'{trace["filename"].split(".")[0]}:{trace["lineno"]}')
+                        print("Checking if at correct lineno: ", f'{bp["filename"]}:{bp["lineno"]}')
                         if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{bp["lineno"]}':
                             at_breakpoint = True
                             break
                 if at_breakpoint:
-                    # print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
+                    print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
                     break
                 self.next()
 

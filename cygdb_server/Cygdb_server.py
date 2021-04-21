@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 MOUNTED_PROJECT_FOLDER = "/project_folder"
 
-WORKING_FOLDER = "./working_folder"
+WORKING_FOLDER = "./working_folder2"
 
 
 # def copy_mounted_folder_to_working_folder():
@@ -151,8 +151,8 @@ def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
 
     stdout = build_outputs.stdout.decode()
     stderr = build_outputs.stderr.decode()
-    print("stdout", stdout)
-    print("stderr", stderr)
+    # print("stdout", stdout)
+    # print("stderr", stderr)
     if "Error compiling Cython file" in stderr or "doesn't match any files" in stderr:
         return stderr, False
 
