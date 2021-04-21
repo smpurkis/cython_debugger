@@ -56,17 +56,6 @@ class CygdbController:
         resp = self.print_output(resp)
         return resp
 
-    def cont(self):
-        # resp = self.gdb.write("cy cont")
-        # resp = self.gdb.write("cy next")
-        # resp = self.print_output(resp)
-        # self.next()
-        self.get_to_next_cython_line()
-        self.get_frame()
-        print("trace", self.frame.trace)
-        self.current_breakpoint += 1
-        return self.frame.trace
-
     def correct_line_number(self, lineno, full_path, to_breakpoint=False):
         full_path = Path(full_path)
         lines = full_path.open().read().split("\n")
@@ -250,6 +239,17 @@ class CygdbController:
                 print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
                 break
             self.gdb.write(f"cy finish")
+
+    def cont(self):
+        resp = self.gdb.write("cy cont")
+        # resp = self.gdb.write("cy next")
+        # resp = self.print_output(resp)
+        # self.next()
+        # self.get_to_next_cython_line()
+        self.get_frame()
+        print("trace", self.frame.trace)
+        self.current_breakpoint += 1
+        return self.frame.trace
 
     def run(self):
         self.gdb.write(f"cy run", timeout_sec=1)
