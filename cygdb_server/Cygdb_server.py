@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 MOUNTED_PROJECT_FOLDER = "/project_folder"
 
-WORKING_FOLDER = "./working_folder2"
+WORKING_FOLDER = "./working_folder"
 
 
 # def copy_mounted_folder_to_working_folder():

@@ -66,7 +66,7 @@ class IoManager:
             make_non_blocking(self.stderr)
 
     def get_gdb_response(
-        self, timeout_sec: float = DEFAULT_GDB_TIMEOUT_SEC, raise_error_on_timeout=True
+        self, timeout_sec: float = DEFAULT_GDB_TIMEOUT_SEC, raise_error_on_timeout=False
     ):
         """Get response from GDB, and block while doing so. If GDB does not have any response ready to be read
         by timeout_sec, an exception is raised.
@@ -262,6 +262,8 @@ class IoManager:
             outputready = [self.stdin_fileno]
         else:
             _, outputready, _ = select.select([], self.write_list, [], timeout_sec)
+
+        print("RAW to GDB: ", mi_cmd_to_write_nl.encode())
         for fileno in outputready:
             if fileno == self.stdin_fileno:
                 # ready to write

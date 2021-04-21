@@ -109,6 +109,7 @@ class GdbController:
         raise_error_on_timeout: bool = True,
         read_response: bool = True,
     ):
+        print("CMD to GDB: ", mi_cmd_to_write)
         """Write command to gdb. See IoManager.write() for details"""
         return self.io_manager.write(
             mi_cmd_to_write, timeout_sec, raise_error_on_timeout, read_response
