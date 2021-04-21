@@ -70,17 +70,18 @@ class CygdbController:
         if not self.breakpoint_lines.get(full_path, False):
             self.breakpoint_lines[full_path] = list(range(1, len(lines) + 1))
         linenos = self.breakpoint_lines[full_path]
-        pprint(linenos)
+        # pprint(linenos)
         corrected_lineno = linenos.index(int(lineno))
-        print("corrected_lineno: ", corrected_lineno, full_path, lineno, to_breakpoint)
-        check = 0
-        for i in range(len(lines)):
-            if "breakpoint" not in str(linenos[i]):
-                check += 1
-            if linenos[i] == int(lineno):
-                check = str(check)
-                break
-        print("check/old value: ", check)
+        # print("corrected_lineno: ", corrected_lineno, full_path, lineno, to_breakpoint)
+        # check = 0
+        # for i in range(len(lines)):
+        #     if "breakpoint" not in str(linenos[i]):
+        #         check += 1
+        #     if linenos[i] == int(lineno):
+        #         check = str(check)
+        #         break
+        # return str(check)
+        # print("check/old value: ", check)
         if to_breakpoint:
             corrected_lineno = corrected_lineno
             # assert "breakpoint" in str(linenos[corrected_lineno]-1)
@@ -93,7 +94,7 @@ class CygdbController:
         lines = file_path.open().read().split("\n")
         lineno_corrected = self.correct_line_number(lineno, full_path)
         lineno_int = max(int(lineno_corrected) - 1, 0)
-        code_on_line_to_break = lines[lineno_int]
+        code_on_line_to_break = lines[lineno_int + 1]
         check_line = re.match(r"^\W+(\S+)", code_on_line_to_break)
         if check_line is None:
             return False
@@ -105,10 +106,10 @@ class CygdbController:
         line_to_add = f"{leading_spaces}print()  # empty print to prevent Cython optimizing out this line"
         lines.insert(lineno_int+1, line_to_add)
         self.breakpoint_lines[full_path].insert(lineno_int+1, f"breakpoint-{lineno}")
-        from pprint import pprint
-        pprint(self.breakpoint_lines[full_path])
+        # from pprint import pprint
+        # pprint(self.breakpoint_lines[full_path])
         lines_with_i = [[i+1, line] for i, line in enumerate(lines)]
-        pprint(lines_with_i)
+        # pprint(lines_with_i)
         text = "\n".join(lines)
         file_path.unlink(missing_ok=False)
         fp = file_path.open("w")
@@ -129,6 +130,7 @@ class CygdbController:
                 lineno=lineno,
                 full_path=full_path
             ))
+            lineno = self.correct_line_number(lineno, full_path)
             resp = self.gdb.write(f"cy break {stem}:{lineno}")
         else:
             return False
@@ -161,7 +163,7 @@ class CygdbController:
                 function_or_object=groups[2],
                 memory_address=groups[1],
             )
-            print("backtrace line: ", backtrace)
+            # print("backtrace line: ", backtrace)
             if groups[3] != "":
                 backtrace["file_parent"] = groups[3]
             backtrace_stack.append(backtrace)
@@ -219,19 +221,19 @@ class CygdbController:
                 if iterations > 10:
                     raise Exception(f"Over allowed iterations: {iterations}")
                 continue
-            print("running to next line")
+            # print("running to next line")
             for bp in self.breakpoints:
                 at_breakpoint = False
                 if bp["type"] == "file":
                     for trace in traces:
                         corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=True)
-                        print("trace number: ", f'{trace["filename"].split(".")[0]}:{trace["lineno"]}')
-                        print("Checking if at correct lineno: ", f'{bp["filename"]}:{bp["lineno"]}')
+                        # print("trace number: ", f'{trace["filename"].split(".")[0]}:{trace["lineno"]}')
+                        # print("Checking if at correct lineno: ", f'{bp["filename"]}:{bp["lineno"]}')
                         if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{bp["lineno"]}':
                             at_breakpoint = True
                             break
                 if at_breakpoint:
-                    print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
+                    # print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
                     break
                 self.next()
 
@@ -250,7 +252,7 @@ class CygdbController:
                 res = resp["payload"].replace("\\e", "").replace("[94m", "").replace("[39;49;00m", "").replace(
                     "[96m", "").replace("[92m", "").replace("[33m", "").replace("[90m", "").strip("\\n")
                 res = "\n".join(res.split("\\n"))
-                print("gdb output: ", res)
+                # print("gdb output: ", res)
                 formatted_resp.append(res)
         return formatted_resp
 

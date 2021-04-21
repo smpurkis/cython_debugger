@@ -17,7 +17,6 @@ import subprocess as sp
 import textwrap
 from pathlib import Path
 from typing import List
-import shutil
 
 import uvicorn
 from fastapi import FastAPI, Body
@@ -29,19 +28,18 @@ logger = logging.getLogger(__name__)
 
 MOUNTED_PROJECT_FOLDER = "/project_folder"
 
-
 WORKING_FOLDER = "./working_folder"
 
 
-def copy_mounted_folder_to_working_folder():
-    cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
-    print(cmd)
-    sp.call(cmd.split())
-    print(f"ls -laths {WORKING_FOLDER}")
-    sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
-
-    print(f"pwd")
-    sp.call(f"pwd", shell=True)
+# def copy_mounted_folder_to_working_folder():
+#     cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
+#     print(cmd)
+#     sp.call(cmd.split())
+#     print(f"ls -laths {WORKING_FOLDER}")
+#     sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
+#
+#     print(f"pwd")
+#     sp.call(f"pwd", shell=True)
 
 
 def recopy_mounted_folder_to_working_folder():
@@ -53,25 +51,26 @@ def recopy_mounted_folder_to_working_folder():
     print(cmd)
     sp.call(cmd.split())
 
-copy_mounted_folder_to_working_folder()
+
+recopy_mounted_folder_to_working_folder()
 
 
 def make_command_file(path_to_debug_info, prefix_code=''):
-    print(Path("./").absolute())
-    print(list(Path("./").glob("*")))
-    print(list(Path("./", "cython_debug").glob("*")))
+    # print(Path("./").absolute())
+    # print(list(Path("./").glob("*")))
+    # print(list(Path("./", "cython_debug").glob("*")))
 
     pattern = os.path.join(path_to_debug_info,
                            'cython_debug',
                            'cython_debug_info_*')
     debug_files = glob.glob(pattern)
-    print(f"pattern: {pattern}")
-    print("debug files ", debug_files)
+    # print(f"pattern: {pattern}")
+    # print("debug files ", debug_files)
     debug_files = list(Path(WORKING_FOLDER).glob(pattern))
-    print("pathlib debug ", debug_files)
+    # print("pathlib debug ", debug_files)
     debug_files = [debug_file.as_posix() for debug_file in
                    Path(WORKING_FOLDER, path_to_debug_info, "cython_debug", ).glob("cython_debug_info_*")]
-    print("pathlib debug2 ", debug_files)
+    # print("pathlib debug2 ", debug_files)
     # assert len(debug_files) > 0
 
     gdb_cy_configure_path = Path(WORKING_FOLDER, "cython_debug", "gdb_configuration_file")
@@ -115,9 +114,9 @@ def make_command_file(path_to_debug_info, prefix_code=''):
         finally:
             interpreter_file.close()
         f.write("file %s\n" % interpreter)
-        print("debug files ", debug_files)
-        print("debug fns,", [fn for fn in debug_files])
-        print('\n'.join('cy import %s\n' % fn for fn in debug_files))
+        # print("debug files ", debug_files)
+        # print("debug fns,", [fn for fn in debug_files])
+        # print('\n'.join('cy import %s\n' % fn for fn in debug_files))
         f.write('\n'.join('cy import %s\n' % fn for fn in debug_files))
         f.write(textwrap.dedent('''\
             python
@@ -208,7 +207,7 @@ class CythonServer:
         return self.format_progress(resp)
 
     def run_debugger(self):
-        recopy_mounted_folder_to_working_folder()
+        # recopy_mounted_folder_to_working_folder()
         # self.restart_debugger()
         output, successful_compile = self.setup_files()
         if not successful_compile:
@@ -227,6 +226,7 @@ class CythonServer:
         return self.format_progress(resp)
 
     def restart_debugger(self):
+        recopy_mounted_folder_to_working_folder()
         self.cygdb.exit_gdb()
         self.cygdb.clear_all()
         self.cygdb.gdb.spawn_new_gdb_subprocess()
@@ -238,11 +238,13 @@ cython_server.gdb_executable_path = "/usr/local/bin/gdb"
 cython_server.gdb_configuration_file = "cython_debug/gdb_configuration_file"
 cython_server.debug_path = "."
 
+
 @app.get("/Restart")
 def restart():
     global cython_server
     cython_server.restart_debugger()
     return
+
 
 @app.post("/setFileToDebug")
 def set_file_to_debug(source: str = Body(..., embed=True)):
@@ -260,7 +262,6 @@ def set_file_to_debug(source: str = Body(..., embed=True)):
                          cython_server.file_path]
 
     cython_server.cygdb = CygdbController(command=cython_server.cmd)
-    print(cython_server.cygdb)
     return {
         "success": True,
         "source": source,
@@ -309,9 +310,6 @@ def continue_debugger():
 @app.get("/Frame")
 def get_frame():
     return cython_server.cygdb.frame
-
-
-
 
 
 if __name__ == '__main__':
