@@ -242,6 +242,7 @@ class CygdbController:
 
     def cont(self):
         resp = self.gdb.write("cy cont")
+        resp = self.gdb.write("cy cont")
         # resp = self.gdb.write("cy next")
         # resp = self.print_output(resp)
         # self.next()
