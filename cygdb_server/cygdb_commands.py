@@ -280,7 +280,7 @@ class CygdbController:
 
     def run(self):
         self.gdb.write(f"cy run", timeout_sec=1)
-        self.get_to_next_cython_line()
+        self.get_to_next_cython_line2()
         self.get_frame()
         self.current_breakpoint += 1
         return self.frame.trace
