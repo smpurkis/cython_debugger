@@ -203,7 +203,7 @@ class CygdbController:
                 print(e)
         return var_type
 
-    def get_to_next_cython_line(self):
+    def get_to_next_cython_line2(self):
         at_breakpoint = False
         iterations = 0
         while not at_breakpoint and iterations < 50:
@@ -239,6 +239,32 @@ class CygdbController:
                 print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
                 break
             self.gdb.write(f"cy finish")
+
+    def get_to_next_cython_line(self):
+        at_breakpoint = False
+        iterations = 0
+        while not at_breakpoint and iterations < 50:
+            iterations += 1
+            traces = self.backtrace()
+            if len(traces) == 0:
+                if iterations > 10:
+                    raise Exception(f"Over allowed iterations: {iterations}")
+                continue
+            print("running to next line")
+            for bp in self.breakpoints:
+                at_breakpoint = False
+                if bp["type"] == "file":
+                    for trace in traces:
+                        corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=True)
+                        print("trace number: ", f'{trace["filename"].split(".")[0]}:{trace["lineno"]}')
+                        print("Checking if at correct lineno: ", f'{bp["filename"]}:{bp["lineno"]}')
+                        if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{bp["lineno"]}':
+                            at_breakpoint = True
+                            break
+                if at_breakpoint:
+                    print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
+                    break
+                self.next()
 
     def cont(self):
         resp = self.gdb.write("cy cont")
