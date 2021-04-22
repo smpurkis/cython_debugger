@@ -86,6 +86,7 @@ def test_frame_get():
     resp = requests.get(server_url + "Frame")
     print(resp)
     frame = json.loads(resp.text)
+    print("frame: ", frame)
     assert len(frame.get("local_variables", [])) == 8
     assert len(frame.get("global_variables", [])) == 12
     assert len(frame.get("trace", [])) == 2
