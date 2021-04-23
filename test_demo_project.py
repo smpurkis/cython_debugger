@@ -5,10 +5,12 @@ import requests
 
 server_url = "http://127.0.0.1:3456/"
 
+file_to_debug = "monte_carlo_simulation.pyx"
+source = "run_file.py"
 
 
 def test_install_requirements():
-    requirements = Path("requirements.txt").read_text()
+    requirements = Path("demo_project/requirements.txt").read_text()
     resp = requests.post(server_url + "installRequirements", data=json.dumps({
         "requirements": requirements
     }))
@@ -21,26 +23,26 @@ def test_install_requirements():
 
 def test_set_file_to_debug():
     resp = requests.post(server_url + "setFileToDebug", data=json.dumps({
-        "source": "main.py"
+        "source": source
     }))
     print(resp)
     print(resp.text)
     resp = json.loads(resp.text)
-    assert resp["source"] == "main.py"
+    assert resp["source"] == source
     assert resp["success"] is True
     # assert type(resp["output"]) == str
 
 
 def test_set_breakpoints_post():
-    breakpoints = list(range(16, 28))
+    breakpoints = [34, 40]
     resp = requests.post(server_url + "setBreakpoints", data=json.dumps({
-        "source": "demo.pyx",
+        "source": file_to_debug,
         "breakpoints": breakpoints
     }))
     print(resp)
     print(resp.text)
     assert json.loads(resp.text) == {
-        "source": "demo.pyx",
+        "source": file_to_debug,
         "breakpoints": breakpoints
     }
 
@@ -56,21 +58,21 @@ def test_compile_files():
 
 def test_launch_post():
     resp = requests.post(server_url + "Launch", data=json.dumps({
-        "source": "demo.pyx",
+        "source": file_to_debug,
     }))
     print(resp)
     print(resp.text)
     assert json.loads(resp.text) == {
         "ended": False,
         "breakpoint": {
-            "filename": "demo.pyx",
-            "lineno": "16"
+            "filename": file_to_debug,
+            "lineno": "34"
         }
     }
 
 
 def test_continue_get():
-    breakpoint_lines_set = [str(i) for i in range(18, 39, 2)]
+    breakpoint_lines_set = ["41"]
     for i in breakpoint_lines_set:
         print()
         print(i)
@@ -82,11 +84,3 @@ def test_continue_get():
         assert type(text["breakpoint"]) == dict
         assert list(text["breakpoint"].keys()) == ["filename", "lineno"]
         assert abs(int(text["breakpoint"]["lineno"]) - int(i)) <= 1
-
-# def test_frame_get():
-#     resp = requests.get(server_url + "Frame")
-#     print(resp)
-#     frame = json.loads(resp.text)
-#     assert len(frame.get("local_variables", [])) == 8
-#     assert len(frame.get("global_variables", [])) == 12
-#     assert len(frame.get("trace", [])) == 2

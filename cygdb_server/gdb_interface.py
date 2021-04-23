@@ -109,7 +109,8 @@ class CygdbController:
         return True
 
     def add_breakpoints(self):
-        break_cmd = "cy break " + " ".join([f"{bp['filename']}:{self.correct_line_number(bp['lineno'], bp['full_path'])}" for bp in self.breakpoints])
+        break_cmd = "cy break " + " ".join(
+            [f"{bp['filename']}:{self.correct_line_number(bp['lineno'], bp['full_path'])}" for bp in self.breakpoints])
         resp = self.gdb.write(break_cmd)
         # TODO Check the resp of adding breakpoint to verify set correctly
 
@@ -205,16 +206,51 @@ class CygdbController:
                 print(e)
         return var_type
 
+    def get_to_next_cython_line(self):
+        iterations = 0
+        while True and iterations < 50:
+            iterations += 1
+            traces = self.backtrace()
+            if len(traces) == 0:
+                raise Exception("Cannot read backtrace, something wrong with Gdb")
+            else:
+                for trace in reversed(traces):
+                    for bp in self.breakpoints:
+                        file = bp["filename"]
+                        if trace["filename"] != file:
+                            continue
+                        correct_lineno = self.correct_line_number(bp['lineno'], bp['full_path'])
+                        if correct_lineno == trace["lineno"]:
+                            return
+                self.gdb.write("cy cont")
+
+    def check_correct_breakpoint(self, resp):
+        iterations = 0
+        while True and iterations < 50:
+            iterations += 1
+            resp = self.format_pexpect_output(resp)
+            if len(resp) == 0:
+                raise Exception("Response from Gdb is blank")
+            elif resp[0] == "":
+                raise Exception("Response from Gdb is blank")
+
+            lineno = resp[0].split()[0]
+            for bp in self.breakpoints:
+                correct_lineno = self.correct_line_number(bp["lineno"], bp["full_path"])
+                if correct_lineno == lineno:
+                    return
+            resp = self.gdb.write("cy cont")
+
     def cont(self):
         resp = self.gdb.write("cy cont")
-        resp = self.gdb.write("cy cont")
+        self.check_correct_breakpoint(resp)
         self.get_frame()
         print("trace", self.frame.trace)
         return self.frame.trace
 
     def run(self):
         resp = self.gdb.write(f"cy run")
-        resp = self.gdb.write(f"cy cont")
+        self.check_correct_breakpoint(resp)
         self.get_frame()
         return self.frame.trace
 
