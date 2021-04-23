@@ -10,7 +10,6 @@ cython_debug).
 Additional gdb args can be provided only if a path to the project directory is
 given.
 """
-import glob
 import logging
 import os
 import subprocess as sp
@@ -28,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 MOUNTED_PROJECT_FOLDER = "/project_folder"
 
-WORKING_FOLDER = "./working_folder"
+WORKING_FOLDER = "./working_folder2"
 
 
 # def copy_mounted_folder_to_working_folder():
@@ -56,22 +55,8 @@ recopy_mounted_folder_to_working_folder()
 
 
 def make_command_file(path_to_debug_info, prefix_code=''):
-    # print(Path("./").absolute())
-    # print(list(Path("./").glob("*")))
-    # print(list(Path("./", "cython_debug").glob("*")))
-
-    pattern = os.path.join(path_to_debug_info,
-                           'cython_debug',
-                           'cython_debug_info_*')
-    debug_files = glob.glob(pattern)
-    # print(f"pattern: {pattern}")
-    # print("debug files ", debug_files)
-    debug_files = list(Path(WORKING_FOLDER).glob(pattern))
-    # print("pathlib debug ", debug_files)
     debug_files = [debug_file.as_posix() for debug_file in
                    Path(WORKING_FOLDER, path_to_debug_info, "cython_debug", ).glob("cython_debug_info_*")]
-    # print("pathlib debug2 ", debug_files)
-    # assert len(debug_files) > 0
 
     gdb_cy_configure_path = Path(WORKING_FOLDER, "cython_debug", "gdb_configuration_file")
     gdb_cy_configure_path.parent.mkdir(exist_ok=True)
@@ -114,9 +99,6 @@ def make_command_file(path_to_debug_info, prefix_code=''):
         finally:
             interpreter_file.close()
         f.write("file %s\n" % interpreter)
-        # print("debug files ", debug_files)
-        # print("debug fns,", [fn for fn in debug_files])
-        # print('\n'.join('cy import %s\n' % fn for fn in debug_files))
         f.write('\n'.join('cy import %s\n' % fn for fn in debug_files))
         f.write(textwrap.dedent('''\
             python
@@ -137,22 +119,21 @@ def make_command_file(path_to_debug_info, prefix_code=''):
     return gdb_cy_configure_path
 
 
-def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg",
-                    cython_setup_file=f"{WORKING_FOLDER}/setup.py"):
+def cythonize_files(python_debug_executable_path="/usr/bin/python3-dbg"):
     """
     Start the Cython debugger. This tells gdb to import the Cython and Python
     extensions (libcython.py and libpython.py) and it enables gdb's pending
     breakpoints.
     """
 
-    BUILD_CMD = f"{python_debug_executable_path} setup.py build_ext --inplace --force"
+    BUILD_CMD = f"{python_debug_executable_path} setup.py build_ext --inplace"
     print(BUILD_CMD)
     build_outputs = sp.run(BUILD_CMD.split(" "), cwd=WORKING_FOLDER, stdout=sp.PIPE, stderr=sp.PIPE)
 
     stdout = build_outputs.stdout.decode()
     stderr = build_outputs.stderr.decode()
-    # print("stdout", stdout)
-    # print("stderr", stderr)
+    print("stdout", stdout)
+    print("stderr", stderr)
     if "Error compiling Cython file" in stderr or "doesn't match any files" in stderr:
         return stderr, False
 
@@ -178,7 +159,7 @@ class CythonServer:
 
     def file_to_debug(self, file_path):
         self.file_path = Path(WORKING_FOLDER, file_path).as_posix()
-        return self.setup_files()
+        # return self.setup_files()
 
     def setup_files(self):
         if self.debug_path and self.python_debug_executable_path:
@@ -207,21 +188,23 @@ class CythonServer:
         return self.format_progress(resp)
 
     def run_debugger(self):
-        # recopy_mounted_folder_to_working_folder()
-        # self.restart_debugger()
         output, successful_compile = self.setup_files()
         if not successful_compile:
             return {
                 "success": False,
                 "stderr": output
             }
+
         self.cmd = [self.gdb_executable_path, "--nx", "--interpreter=mi3", "--quiet", '-command',
                     self.gdb_configuration_file.as_posix(),
                     "--args",
                     self.python_debug_executable_path,
                     self.file_path]
-        print(" ".join(self.cmd))
 
+        print(" ".join(self.cmd))
+        self.cygdb.spawn_gdb(self.cmd)
+
+        self.cygdb.add_breakpoints()
         resp = self.cygdb.run()
         return self.format_progress(resp)
 
@@ -229,13 +212,12 @@ class CythonServer:
         recopy_mounted_folder_to_working_folder()
         self.cygdb.exit_gdb()
         self.cygdb.clear_all()
-        self.cygdb.gdb.spawn_new_gdb_subprocess()
+        self.cygdb.gdb.start_new_process()
 
 
 cython_server = CythonServer()
 cython_server.python_debug_executable_path = "/usr/bin/python3.8-dbg"
 cython_server.gdb_executable_path = "/usr/local/bin/gdb"
-cython_server.gdb_configuration_file = "cython_debug/gdb_configuration_file"
 cython_server.debug_path = "."
 
 
@@ -248,24 +230,10 @@ def restart():
 
 @app.post("/setFileToDebug")
 def set_file_to_debug(source: str = Body(..., embed=True)):
-    output, successful_compile = cython_server.file_to_debug(source)
-    if not successful_compile:
-        return {
-            "success": False,
-            "source": source,
-            "output": output
-        }
-    cython_server.cmd = [cython_server.gdb_executable_path, "--nx", "--interpreter=mi3", "--quiet", '-command',
-                         cython_server.gdb_configuration_file.as_posix(),
-                         "--args",
-                         cython_server.python_debug_executable_path,
-                         cython_server.file_path]
-
-    cython_server.cygdb = CygdbController(command=cython_server.cmd)
+    cython_server.file_to_debug(source)
     return {
         "success": True,
         "source": source,
-        "output": output
     }
 
 
@@ -281,9 +249,10 @@ def hello():
 
 @app.post("/setBreakpoints")
 def set_breakpoints(source: str = Body(...), breakpoints: List[int] = Body(...)):
+    cython_server.cygdb = CygdbController()
     valid_breakpoints = []
     for lineno in breakpoints:
-        valid = cython_server.cygdb.add_breakpoint(
+        valid = cython_server.cygdb.add_prints_to_file(
             filename=source,
             lineno=lineno,
             full_path=Path(WORKING_FOLDER, source).as_posix()
@@ -291,6 +260,7 @@ def set_breakpoints(source: str = Body(...), breakpoints: List[int] = Body(...))
         print(Path(WORKING_FOLDER, source).as_posix())
         if valid:
             valid_breakpoints.append(lineno)
+
     return {
         "source": source,
         "breakpoints": breakpoints

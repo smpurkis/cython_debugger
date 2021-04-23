@@ -4,6 +4,7 @@ from pprint import pprint
 
 import regex as re
 
+from interface_pexpect import Process
 from pygdbmi.gdbcontroller import GdbController
 
 
@@ -28,14 +29,15 @@ class Frame:
 
 
 class CygdbController:
-    def __init__(self, command):
+    def __init__(self):
         self.breakpoint_lines = {}
-        self.command = command
-        self.gdb = GdbController(command=command)
         self.trace = []
         self.frame = None
         self.breakpoints = []
         self.current_breakpoint = 0
+
+    def spawn_gdb(self, cmd):
+        self.gdb = Process(cmd=cmd)
 
     def clear_all(self):
         self.breakpoints = []
@@ -49,11 +51,11 @@ class CygdbController:
 
     def get_locals(self):
         resp = self.gdb.write("cy locals")
-        return self.print_output(resp)
+        return self.format_pexpect_output(resp)
 
     def next(self):
         resp = self.gdb.write("cy next")
-        resp = self.print_output(resp)
+        resp = self.format_pexpect_output(resp)
         return resp
 
     def correct_line_number(self, lineno, full_path, to_breakpoint=False):
@@ -109,7 +111,13 @@ class CygdbController:
         fp.close()
         return True
 
-    def add_breakpoint(self, filename="", lineno="", full_path=""):
+    def add_breakpoints(self):
+        for bp in self.breakpoints:
+            corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"])
+            resp = self.gdb.write(f"cy break {bp['filename']}:{corrected_lineno}")
+            # TODO Check the resp of adding breakpoint to verify set correctly
+
+    def add_prints_to_file(self, filename="", lineno="", full_path=""):
         lineno = str(lineno)
         stem = Path(filename).stem
         if len(filename) > 0 and len(lineno) > 0:
@@ -123,7 +131,6 @@ class CygdbController:
                 full_path=full_path
             ))
             lineno = self.correct_line_number(lineno, full_path)
-            resp = self.gdb.write(f"cy break {stem}:{lineno}")
         else:
             return False
         return True
@@ -139,7 +146,7 @@ class CygdbController:
     @staticmethod
     def format_backtrace(resp):
         backtrace_stack = []
-        trace_line_pattern = r"(?:\W+)?(\w+)\W+(.*) in (.*) at (.*\/)?(.*):(\w+)\W+(\w+)\W+(.*)"
+        trace_line_pattern = r"^(?:\W+)?(\w+)\W+(.*) in (.*) at (.*\/)?(.*):(\w+)(\W+(\w+)\W+(.*))?"
         resp = "".join(resp).split("#")
         resp = [r.rstrip() for r in resp]
         for trace in resp:
@@ -151,11 +158,10 @@ class CygdbController:
             backtrace = dict(
                 filename=groups[4],
                 lineno=groups[5],
-                code=groups[7].replace("\\\"", '"'),
+                code=groups[7].replace("\\\"", '"') if groups[7] is not None else None,
                 function_or_object=groups[2],
                 memory_address=groups[1],
             )
-            # print("backtrace line: ", backtrace)
             if groups[3] != "":
                 backtrace["file_parent"] = groups[3]
             backtrace_stack.append(backtrace)
@@ -164,28 +170,28 @@ class CygdbController:
 
     def step(self):
         resp = self.gdb.write("cy step")
-        resp = self.print_output(resp)
+        resp = self.format_pexpect_output(resp)
         return resp
 
     def backtrace(self):
         resp = self.gdb.write(f"cy bt")
-        resp = self.print_output(resp)
+        resp = self.format_pexpect_output(resp)
         resp = self.format_backtrace(resp)
         return resp
 
     def get_list(self):
         resp = self.gdb.write(f"cy list")
-        return self.print_output(resp)
+        return self.format_pexpect_output(resp)
 
     def exec(self, cmd):
         resp = self.gdb.write(f"cy exec {cmd}")
-        resp = self.print_output(resp)
+        resp = self.format_pexpect_output(resp)
         return resp
 
     def determine_python_type(self, name, value=None):
         var_type = "Unknown"
         if value is None:
-            class_pattern = r"\<\w+ '(.*)'\>"
+            class_pattern = r"^\<\w+ \'(.*)\'\>"
             resp = self.exec(f"type({name})")
             # assert len(resp) == 1
             match = False
@@ -202,43 +208,6 @@ class CygdbController:
             except Exception as e:
                 print(e)
         return var_type
-
-    def get_to_next_cython_line2(self):
-        at_breakpoint = False
-        iterations = 0
-        while not at_breakpoint and iterations < 50:
-            iterations += 1
-            traces = self.backtrace()
-            print("Trace: ", traces[-1])
-            if len(traces) == 0:
-                if iterations > 10:
-                    raise Exception(f"Over allowed iterations: {iterations}")
-                continue
-            bp = self.breakpoints[self.current_breakpoint]
-            p0 = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=True)
-            p1 = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=False)
-            p = 0
-            # print("running to next line")
-            # for bp in self.breakpoints:
-            at_breakpoint = False
-            if bp["type"] == "file":
-                for trace in [traces[-1]]:
-                    lines_to_next_breakpoint = 0
-                    corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=True)
-                    print("trace number: ", f'{trace["filename"].split(".")[0]}:{trace["lineno"]}')
-                    print("Checking if at correct lineno: ", f'{bp["filename"]}:{bp["lineno"]}')
-                    # if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{bp["lineno"]}':
-                    #     at_breakpoint = True
-                    #     break
-                    if trace["filename"].split(".")[0] == bp["filename"]:
-                        lines_to_next_breakpoint = int(corrected_lineno) - int(trace["lineno"])
-                        if abs(lines_to_next_breakpoint) <= 1:
-                            at_breakpoint = True
-                            break
-            if at_breakpoint:
-                print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
-                break
-            self.gdb.write(f"cy finish")
 
     def get_to_next_cython_line(self):
         at_breakpoint = False
@@ -268,35 +237,29 @@ class CygdbController:
 
     def cont(self):
         resp = self.gdb.write("cy cont")
-        # resp = self.gdb.write("cy cont")
-        # resp = self.gdb.write("cy next")
-        # resp = self.print_output(resp)
-        # self.next()
-        # self.get_to_next_cython_line()
+        resp = self.gdb.write("cy cont")
         self.get_frame()
         print("trace", self.frame.trace)
-        self.current_breakpoint += 1
         return self.frame.trace
 
     def run(self):
-        self.gdb.write(f"cy run", timeout_sec=1)
-        self.get_to_next_cython_line2()
+        resp = self.gdb.write(f"cy run")
+        resp = self.gdb.write(f"cy cont")
         self.get_frame()
-        self.current_breakpoint += 1
         return self.frame.trace
 
     @staticmethod
-    def print_output(responses):
-        formatted_resp = []
+    def format_pexpect_output(responses):
+        relevant_responses = []
         for resp in responses:
-            # print(resp)
-            if resp["type"] in ["console", "output"]:
-                res = resp["payload"].replace("\\e", "").replace("[94m", "").replace("[39;49;00m", "").replace(
-                    "[96m", "").replace("[92m", "").replace("[33m", "").replace("[90m", "").strip("\\n")
-                res = "\n".join(res.split("\\n"))
-                # print("gdb output: ", res)
-                formatted_resp.append(res)
-        return formatted_resp
+            if resp == "":
+                continue
+            if resp[0] == "~":
+                resp = resp.replace("~\"", "").replace("\\n\"", "")
+                relevant_responses.append(resp)
+            elif resp[0] == "<":
+                relevant_responses.append(resp)
+        return relevant_responses
 
     def format_locals(self, variable_list):
         new_variable_list = []
@@ -332,7 +295,7 @@ class CygdbController:
 
     def get_globals(self):
         resp = self.gdb.write("cy globals")
-        resp = self.print_output(resp)
+        resp = self.format_pexpect_output(resp)
         try:
             resp.remove('Python globals:')
             resp.remove('C globals:')
@@ -345,10 +308,16 @@ class CygdbController:
         for var in global_list:
 
             type_value_pattern = r"^\W+(\w+)\W+=\s+(.*)"
-            groups = re.match(type_value_pattern, var).groups()
+            groups = re.match(type_value_pattern, var)
+
+            if groups is None:
+                continue
+
+            groups = groups.groups()
             name = groups[0]
 
             if groups[1] is not None:
+                name = groups[0]
                 value = groups[1]
             else:
                 value = "Unknown"
@@ -362,4 +331,4 @@ class CygdbController:
 
     def command(self, cmd):
         resp = self.gdb.write(cmd)
-        return self.print_output(resp)
+        return self.format_pexpect_output(resp)
