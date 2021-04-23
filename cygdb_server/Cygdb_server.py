@@ -269,5 +269,31 @@ def get_frame():
     return cython_server.cygdb.frame
 
 
+@app.post("/installRequirements")
+def install_requirements(requirements: str = Body(..., embed=True)):
+    user_requirements_file = Path("user_requirements.txt")
+    if user_requirements_file.exists():
+        user_requirements_file.unlink()
+    user_requirements_file.write_text(requirements)
+    pip_install_cmd = f"python3.8-dbg -m pip install -r user_requirements.txt --force --no-cache"
+    print(pip_install_cmd)
+    build_outputs = sp.run(pip_install_cmd.split(), stdout=sp.PIPE, stderr=sp.PIPE)
+
+    stdout = build_outputs.stdout.decode()
+    stderr = build_outputs.stderr.decode()
+    return_code = build_outputs.returncode
+
+    if return_code != 0:
+        return dict(
+            success=False,
+            output=stderr
+        )
+
+    return dict(
+        success=True,
+        output=stdout
+    )
+
+
 if __name__ == '__main__':
     uvicorn.run(app, host="0.0.0.0", port=3456)

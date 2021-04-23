@@ -1,14 +1,9 @@
 import json
+from pathlib import Path
 
 import requests
 
 server_url = "http://127.0.0.1:3456/"
-
-config = {
-    "gdb_executable_path": "/usr/local/bin/gdb",
-    "python_debug_executable_path": "/usr/bin/python3.8-dbg",
-    "gdb_configuration_file": "gdb_configuration_file",
-}
 
 
 def test_hello_get():
@@ -26,6 +21,18 @@ def test_hello_post():
     print(resp)
     print(resp.text)
     assert resp.text == '"Hello: Sam"'
+
+
+def test_install_requirements():
+    requirements = Path("requirements.txt").read_text()
+    resp = requests.post(server_url + "installRequirements", data=json.dumps({
+        "requirements": requirements
+    }))
+    print(resp)
+    print(resp.text)
+    resp = json.loads(resp.text)
+    assert resp["success"] is True
+    assert type(resp["output"]) == str
 
 
 def test_set_file_to_debug():
