@@ -1,4 +1,0 @@
-file_path: main.py
-gdb_executable: /usr/local/bin/gdb
-python_debug_executable_path: /usr/bin/python3-dbg
-tempfilename: gdb_configuration_file

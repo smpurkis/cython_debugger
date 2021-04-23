@@ -1,17 +1,4 @@
-#!/usr/bin/env python
-
-"""
-The Cython debugger
-
-The current directory should contain a directory named 'cython_debug', or a
-path to the cython project directory should be given (the parent directory of
-cython_debug).
-
-Additional gdb args can be provided only if a path to the project directory is
-given.
-"""
 import logging
-import os
 import subprocess as sp
 import textwrap
 from pathlib import Path
@@ -21,24 +8,13 @@ import uvicorn
 from fastapi import FastAPI, Body
 from pydantic import BaseModel
 
-from cygdb_commands import CygdbController
+from gdb_interface import CygdbController
 
 logger = logging.getLogger(__name__)
 
 MOUNTED_PROJECT_FOLDER = "/project_folder"
 
 WORKING_FOLDER = "./working_folder2"
-
-
-# def copy_mounted_folder_to_working_folder():
-#     cmd = f"cp -r {MOUNTED_PROJECT_FOLDER}/ {WORKING_FOLDER}"
-#     print(cmd)
-#     sp.call(cmd.split())
-#     print(f"ls -laths {WORKING_FOLDER}")
-#     sp.call(f"ls -laths {WORKING_FOLDER}", shell=True)
-#
-#     print(f"pwd")
-#     sp.call(f"pwd", shell=True)
 
 
 def recopy_mounted_folder_to_working_folder():

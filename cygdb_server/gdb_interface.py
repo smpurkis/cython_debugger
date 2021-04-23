@@ -1,11 +1,8 @@
 import ast
 from pathlib import Path
-from pprint import pprint
 
+import pexpect
 import regex as re
-
-from interface_pexpect import Process
-from pygdbmi.gdbcontroller import GdbController
 
 
 class Frame:
@@ -98,11 +95,11 @@ class CygdbController:
         else:
             leading_spaces = ""
         line_to_add = f"{leading_spaces}print()  # empty print to prevent Cython optimizing out this line"
-        lines.insert(lineno_int+1, line_to_add)
-        self.breakpoint_lines[full_path].insert(lineno_int+1, f"breakpoint-{lineno}")
+        lines.insert(lineno_int + 1, line_to_add)
+        self.breakpoint_lines[full_path].insert(lineno_int + 1, f"breakpoint-{lineno}")
         # from pprint import pprint
         # pprint(self.breakpoint_lines[full_path])
-        lines_with_i = [[i+1, line] for i, line in enumerate(lines)]
+        lines_with_i = [[i + 1, line] for i, line in enumerate(lines)]
         # pprint(lines_with_i)
         text = "\n".join(lines)
         file_path.unlink(missing_ok=False)
@@ -112,10 +109,9 @@ class CygdbController:
         return True
 
     def add_breakpoints(self):
-        for bp in self.breakpoints:
-            corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"])
-            resp = self.gdb.write(f"cy break {bp['filename']}:{corrected_lineno}")
-            # TODO Check the resp of adding breakpoint to verify set correctly
+        break_cmd = "cy break " + " ".join([f"{bp['filename']}:{self.correct_line_number(bp['lineno'], bp['full_path'])}" for bp in self.breakpoints])
+        resp = self.gdb.write(break_cmd)
+        # TODO Check the resp of adding breakpoint to verify set correctly
 
     def add_prints_to_file(self, filename="", lineno="", full_path=""):
         lineno = str(lineno)
@@ -208,32 +204,6 @@ class CygdbController:
             except Exception as e:
                 print(e)
         return var_type
-
-    def get_to_next_cython_line(self):
-        at_breakpoint = False
-        iterations = 0
-        while not at_breakpoint and iterations < 50:
-            iterations += 1
-            traces = self.backtrace()
-            if len(traces) == 0:
-                if iterations > 10:
-                    raise Exception(f"Over allowed iterations: {iterations}")
-                continue
-            print("running to next line")
-            for bp in self.breakpoints:
-                at_breakpoint = False
-                if bp["type"] == "file":
-                    for trace in traces:
-                        corrected_lineno = self.correct_line_number(bp["lineno"], bp["full_path"], to_breakpoint=True)
-                        print("trace number: ", f'{trace["filename"].split(".")[0]}:{trace["lineno"]}')
-                        print("Checking if at correct lineno: ", f'{bp["filename"]}:{bp["lineno"]}')
-                        if f'{trace["filename"].split(".")[0]}:{trace["lineno"]}' == f'{bp["filename"]}:{bp["lineno"]}':
-                            at_breakpoint = True
-                            break
-                if at_breakpoint:
-                    print(f"Stopping at {bp['filename']}, raw: {bp['lineno']}, {self.correct_line_number(bp['lineno'], bp['full_path'], to_breakpoint=True)}")
-                    break
-                self.next()
 
     def cont(self):
         resp = self.gdb.write("cy cont")
@@ -332,3 +302,74 @@ class CygdbController:
     def command(self, cmd):
         resp = self.gdb.write(cmd)
         return self.format_pexpect_output(resp)
+
+
+class Process:
+    def __init__(self, cmd):
+        if type(cmd) == list:
+            cmd = " ".join(cmd)
+        self.cmd = cmd
+        self.start_process(cmd)
+
+    def start_process(self, cmd):
+        self.proc = pexpect.spawn(cmd)
+        self.write()
+
+    def exit(self):
+        self.proc.close(force=True)
+
+    def start_new_process(self):
+        self.exit()
+        self.start_process(self.cmd)
+
+    def write(self, command=None, first=False):
+        if command:
+            print("CMD to GDB: ", command)
+            self.proc.sendline(command)
+        resp = b""
+        while True:
+            try:
+                letter = self.proc.read_nonblocking(size=1, timeout=5)
+            except pexpect.exceptions.TIMEOUT as e:
+                print(e)
+                break
+            resp += letter
+            if b"(gdb) \r\n" in resp[-8:]:
+                if first:
+                    first = False
+                    continue
+                break
+        resp = resp.decode()
+        resp = resp.replace("\\e", "").replace("[94m", "").replace("[39;49;00m", "").replace(
+            "[96m", "").replace("[92m", "").replace("[33m", "").replace("[90m", "").strip("\\n")
+        return_count = resp.count("\r\n")
+        new_line_count = resp.count("\\n")
+        print(resp)
+        if return_count > new_line_count:
+            resp = resp.split("\r\n")
+        else:
+            resp = resp.split("\\n")
+        return resp
+
+
+if __name__ == '__main__':
+    cmd = "/usr/local/bin/gdb --nx --quiet --interpreter=mi3 -command working_folder2/cython_debug/gdb_configuration_file --args /usr/bin/python3.8-dbg working_folder2/main.py"
+
+    proc = Process(cmd)
+    resp = proc.write("cy break demo:16")
+    assert len(resp) > 7
+    resp2 = proc.write("cy break demo:18")
+    assert len(resp) > 7
+    resp3 = proc.write("cy break demo:20")
+    assert len(resp) > 7
+    resp4 = proc.write("cy break demo:22")
+    assert len(resp) > 7
+    resp5 = proc.write("cy run")
+    assert len(resp) > 7
+    resp6 = proc.write("cy cont")
+    assert len(resp) > 7
+    resp7 = proc.write("cy cont")
+    assert len(resp) > 7
+    resp8 = proc.write("cy cont")
+    assert len(resp) > 7
+    p = 0
