@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import requests
 
@@ -28,11 +29,16 @@ def test_hello_post():
     assert resp.text == '"Hello: Sam"'
 
 
-# @mark.order2
-# def test_config_post():
-#     resp = requests.post(server_url + "Config", data=json.dumps(config))
-#     print(resp)
-#     print(resp.text)
+def test_install_requirements():
+    requirements = Path("requirements.txt").read_text()
+    resp = requests.post(server_url + "installRequirements", data=json.dumps({
+        "requirements": requirements
+    }))
+    print(resp)
+    print(resp.text)
+    resp = json.loads(resp.text)
+    assert resp["success"] is True
+    assert type(resp["output"]) == str
 
 
 def test_set_file_to_debug():
