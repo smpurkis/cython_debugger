@@ -71,6 +71,16 @@ def test_launch_post():
     }
 
 
+def test_frame_get():
+    resp = requests.get(server_url + "Frame")
+    print(resp)
+    frame = json.loads(resp.text)
+    print("frame: ", frame)
+    assert len(frame.get("local_variables", [])) == 2
+    assert len(frame.get("global_variables", [])) == 20
+    assert len(frame.get("trace", [])) == 3
+
+
 def test_continue_get():
     breakpoint_lines_set = ["41"]
     for i in breakpoint_lines_set:
