@@ -1,7 +1,6 @@
 import json
 
 import requests
-from pytest import mark
 
 server_url = "http://127.0.0.1:3456/"
 
@@ -12,7 +11,6 @@ config = {
 }
 
 
-@mark.order0
 def test_hello_get():
     resp = requests.get(server_url + "hello")
     print(resp)
@@ -20,7 +18,6 @@ def test_hello_get():
     assert resp.text == '"Working"'
 
 
-@mark.order1
 def test_hello_post():
     resp = requests.post(server_url + "hello", data=json.dumps({
         "hello": "Sam",
@@ -31,14 +28,6 @@ def test_hello_post():
     assert resp.text == '"Hello: Sam"'
 
 
-# @mark.order2
-# def test_config_post():
-#     resp = requests.post(server_url + "Config", data=json.dumps(config))
-#     print(resp)
-#     print(resp.text)
-
-
-@mark.order3
 def test_set_file_to_debug():
     resp = requests.post(server_url + "setFileToDebug", data=json.dumps({
         "source": "main.py"
@@ -51,7 +40,6 @@ def test_set_file_to_debug():
     # assert type(resp["output"]) == str
 
 
-@mark.order4
 def test_set_breakpoints_post():
     resp = requests.post(server_url + "setBreakpoints", data=json.dumps({
         "source": "demo.pyx",
@@ -65,7 +53,15 @@ def test_set_breakpoints_post():
     }
 
 
-@mark.order5
+def test_compile_files():
+    resp = requests.get(server_url + "compileFiles")
+    print(resp)
+    print(resp.text)
+    text = json.loads(resp.text)
+    assert text["success"] is True
+    assert type(text["output"]) == str
+
+
 def test_launch_post():
     resp = requests.post(server_url + "Launch", data=json.dumps({
         "source": "demo.pyx",
@@ -81,7 +77,6 @@ def test_launch_post():
     }
 
 
-@mark.order7
 def test_frame_get():
     resp = requests.get(server_url + "Frame")
     print(resp)
@@ -92,7 +87,6 @@ def test_frame_get():
     assert len(frame.get("trace", [])) == 2
 
 
-@mark.order8
 def test_continue_get():
     resp = requests.get(server_url + "Continue")
     print(resp)
@@ -106,14 +100,12 @@ def test_continue_get():
     }
 
 
-@mark.order9
 def test_restart_post():
     resp = requests.get(server_url + "Restart")
     print(resp)
     print(resp.text)
 
 
-@mark.order10
 def test_set_file_to_debug2():
     resp = requests.post(server_url + "setFileToDebug", data=json.dumps({
         "source": "main.py"
@@ -122,7 +114,6 @@ def test_set_file_to_debug2():
     print(resp.text)
 
 
-@mark.order11
 def test_set_breakpoints_post2():
     resp = requests.post(server_url + "setBreakpoints", data=json.dumps({
         "source": "demo.pyx",
@@ -136,7 +127,15 @@ def test_set_breakpoints_post2():
     }
 
 
-@mark.order12
+def test_compile_files2():
+    resp = requests.get(server_url + "compileFiles")
+    print(resp)
+    print(resp.text)
+    text = json.loads(resp.text)
+    assert text["success"] is True
+    assert type(text["output"]) == str
+
+
 def test_launch_post2():
     resp = requests.post(server_url + "Launch", data=json.dumps({
         "source": "demo.pyx",

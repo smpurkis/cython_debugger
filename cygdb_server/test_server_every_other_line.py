@@ -61,6 +61,15 @@ def test_set_breakpoints_post():
     }
 
 
+def test_compile_files():
+    resp = requests.get(server_url + "compileFiles")
+    print(resp)
+    print(resp.text)
+    text = json.loads(resp.text)
+    assert text["success"] is True
+    assert type(text["output"]) == str
+
+
 def test_launch_post():
     resp = requests.post(server_url + "Launch", data=json.dumps({
         "source": "demo.pyx",
@@ -75,6 +84,7 @@ def test_launch_post():
         }
     }
 
+
 def test_continue_get():
     breakpoint_lines_set = [str(i) for i in range(18, 39, 2)]
     for i in breakpoint_lines_set:
@@ -88,8 +98,6 @@ def test_continue_get():
         assert type(text["breakpoint"]) == dict
         assert list(text["breakpoint"].keys()) == ["filename", "lineno"]
         assert abs(int(text["breakpoint"]["lineno"]) - int(i)) <= 1
-
-
 
 # def test_frame_get():
 #     resp = requests.get(server_url + "Frame")

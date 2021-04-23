@@ -163,14 +163,20 @@ class CythonServer:
         resp = self.cygdb.cont()
         return self.format_progress(resp)
 
-    def run_debugger(self):
+    def cythonize_files(self):
         output, successful_compile = self.setup_files()
         if not successful_compile:
             return {
                 "success": False,
-                "stderr": output
+                "output": output
+            }
+        else:
+            return {
+                "success": True,
+                "output": output
             }
 
+    def run_debugger(self):
         self.cmd = [self.gdb_executable_path, "--nx", "--interpreter=mi3", "--quiet", '-command',
                     self.gdb_configuration_file.as_posix(),
                     "--args",
@@ -221,6 +227,11 @@ def hello(hello: str = Body(...), test: str = Body(...)):
 @app.get("/hello")
 def hello():
     return "Working"
+
+
+@app.get("/compileFiles")
+def compile_files():
+    return cython_server.cythonize_files()
 
 
 @app.post("/setBreakpoints")
