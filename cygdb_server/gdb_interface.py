@@ -97,10 +97,10 @@ class CygdbController:
         line_to_add = f"{leading_spaces}print()  # empty print to prevent Cython optimizing out this line"
         lines.insert(lineno_int + 1, line_to_add)
         self.breakpoint_lines[full_path].insert(lineno_int + 1, f"breakpoint-{lineno}")
-        from pprint import pprint
-        pprint(self.breakpoint_lines[full_path])
-        lines_with_i = [[i + 1, line] for i, line in enumerate(lines)]
-        pprint(lines_with_i)
+        # from pprint import pprint
+        # pprint(self.breakpoint_lines[full_path])
+        # lines_with_i = [[i + 1, line] for i, line in enumerate(lines)]
+        # pprint(lines_with_i)
         text = "\n".join(lines)
         file_path.unlink(missing_ok=False)
         fp = file_path.open("w")
@@ -344,7 +344,7 @@ class Process:
             "[96m", "").replace("[92m", "").replace("[33m", "").replace("[90m", "").strip("\\n")
         return_count = resp.count("\r\n")
         new_line_count = resp.count("\\n")
-        print(resp)
+        # print(resp)
         if return_count > new_line_count:
             resp = resp.split("\r\n")
         else:
