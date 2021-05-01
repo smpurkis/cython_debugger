@@ -35,5 +35,5 @@ RUN python3.8 -m pip install -r requirements.txt
 #CMD which gdb; gdb --version; /bin/bash
 EXPOSE 3456
 #CMD /bin/bash
-CMD python3.8 /gdb_python2_installation/cython_debugger/cygdb_server/Cygdb_server.py || /bin/bash
+CMD python3.8 /gdb_python2_installation/cython_debugger/cygdb_server/Cygdb_server.py
 #CMD python3.8 Cygdb_terminal.py -p python3.8-dbg -f main.py; python3.8 Cygdb_server.py; /bin/bash
